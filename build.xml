@@ -285,6 +285,7 @@
                 <arg value="-no-stdlib"/>
                 <arg value="-meta-info"/>
                 <arg value="@{meta-info}"/>
+                <arg value="-Xgen-metainfo-dir"/>
                 <arg line="-main noCall"/>
             </java>
         </sequential>
@@ -297,11 +298,13 @@
         <property name="compiled.stdlib.meta.js" value="stdlib.meta.js"/>
         <property name="stdlib.js.dir" value="${basedir}/js/js.translator/testData"/>
 
-        <new-kotlin2js output="${output}/${compiled.builtins.js}" meta-info="${output}/${compiled.builtins.meta.js}">
+        <new-kotlin2js output="${output}/metainfo/${compiled.builtins.js}" meta-info="${output}/metainfo/${compiled.builtins.meta.js}">
             <src>
                 <fileset refid="kotlin.builtin.files"/>
             </src>
         </new-kotlin2js>
+
+        <copy file="${output}/metainfo/${compiled.builtins.js}" todir="${output}"/>
 
         <new-kotlin2js output="${output}/${compiled.stdlib.js}" meta-info="${output}/${compiled.stdlib.meta.js}">
             <src>
@@ -350,10 +353,12 @@
         </closure-compiler>
 
         <jar jarfile="${kotlin-home}/lib/kotlin-jslib.jar" duplicate="fail">
-            <resources refid="js.lib.files" />
             <zipfileset file="${kotlin-home}/build.txt" prefix="META-INF"/>
             <zipfileset file="${output}/kotlin.js" prefix=""/>
             <zipfileset file="${output}/${compiled.stdlib.meta.js}" prefix=""/>
+            <fileset id="kotlin.meta.files" dir="${output}">
+                <include name="stdlib/**/*"/>
+                </fileset>
 
             <manifest>
                 <attribute name="Built-By" value="${manifest.impl.vendor}"/>
