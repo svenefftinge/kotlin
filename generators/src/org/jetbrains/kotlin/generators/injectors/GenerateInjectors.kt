@@ -44,6 +44,7 @@ import org.jetbrains.kotlin.resolve.jvm.JavaDescriptorResolver
 import org.jetbrains.kotlin.resolve.jvm.JavaLazyAnalyzerPostConstruct
 import org.jetbrains.kotlin.resolve.lazy.*
 import org.jetbrains.kotlin.resolve.lazy.declarations.DeclarationProviderFactory
+import org.jetbrains.kotlin.resolve.validation.DefaultSymbolUsageValidator
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
 import org.jetbrains.kotlin.types.DynamicTypesAllowed
 import org.jetbrains.kotlin.types.DynamicTypesSettings
@@ -106,6 +107,7 @@ private fun generatorForLazyLocalClassifierAnalyzer() =
             field<NoFileScopeProvider>()
             field<DeclarationScopeProviderForLocalClassifierAnalyzer>()
             field<LocalLazyDeclarationResolver>()
+            field<DefaultSymbolUsageValidator>()
         }
 
 private fun generatorForLazyBodyResolve() =
@@ -118,6 +120,7 @@ private fun generatorForLazyBodyResolve() =
             parameter<DynamicTypesSettings>()
 
             field<ModuleDescriptor>(init = GivenExpression("analyzer.getModuleDescriptor()"), useAsContext = true)
+            field<DefaultSymbolUsageValidator>()
 
             publicField<LazyTopDownAnalyzerForTopLevel>()
         }
@@ -212,6 +215,7 @@ private fun generatorForMacro() =
                   init = GivenExpression("org.jetbrains.kotlin.context.ContextPackage.GlobalContext()"))
 
             field<AdditionalCheckerProvider.DefaultProvider>()
+            field<DefaultSymbolUsageValidator>()
         }
 
 private fun generatorForTests() =
@@ -229,6 +233,7 @@ private fun generatorForTests() =
                   useAsContext = true)
 
             field<KotlinJvmCheckerProvider>()
+            field<DefaultSymbolUsageValidator>()
         }
 
 private fun generatorForBodyResolve() =
@@ -241,6 +246,7 @@ private fun generatorForBodyResolve() =
             parameter<StatementFilter>()
 
             publicField<BodyResolver>()
+            field<DefaultSymbolUsageValidator>()
         }
 
 private fun generatorForLazyResolve() =
@@ -257,6 +263,7 @@ private fun generatorForLazyResolve() =
 
             field<ScopeProvider>()
             field<LazyResolveToken>()
+            field<DefaultSymbolUsageValidator>()
         }
 
 private fun DependencyInjectorGenerator.commonForResolveSessionBased() {
@@ -268,6 +275,7 @@ private fun DependencyInjectorGenerator.commonForResolveSessionBased() {
 
     publicField<ResolveSession>()
     field<ScopeProvider>()
+    field<DefaultSymbolUsageValidator>()
 }
 
 private fun DependencyInjectorGenerator.commonForJavaTopDownAnalyzer() {
