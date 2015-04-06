@@ -17,12 +17,14 @@
 package org.jetbrains.kotlin.serialization.js
 
 import com.google.protobuf.ByteString
+import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.builtins.BuiltInsSerializationUtil
 import org.jetbrains.kotlin.builtins.createBuiltInPackageFragmentProvider
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.descriptors.PackageFragmentProvider
+import org.jetbrains.kotlin.load.kotlin.PackageClassUtils
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.descriptorUtil.classId
@@ -36,12 +38,16 @@ import org.jetbrains.kotlin.storage.StorageManager
 import org.jetbrains.kotlin.utils.KotlinJavascriptMetadataUtils
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import java.io.File
 import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
 import kotlin.platform.platformStatic
 
 public object KotlinJavascriptSerializationUtil {
-    private val PACKAGE_FILE_EXT = ".kotlin_package"
+    public val META_EXT: String = "kjsm"
+    public val DOT_META_EXT: String = "." + META_EXT
+
+    private val CLASS_METADATA_FILE_EXTENSION = ".kotlin_class"
 
     platformStatic
     public fun createPackageFragmentProvider(moduleDescriptor: ModuleDescriptor, metadata: ByteArray, storageManager: StorageManager): PackageFragmentProvider? {
@@ -50,10 +56,7 @@ public object KotlinJavascriptSerializationUtil {
         gzipInputStream.close()
 
         val contentMap: MutableMap<String, ByteArray> = hashMapOf()
-        for (index in content.getEntryCount().indices) {
-            val entry = content.getEntry(index)
-            contentMap[entry.getPath()] = entry.getContent().toByteArray()
-        }
+        content.getEntryList().forEach { entry -> contentMap[entry.getPath()] = entry.getContent().toByteArray() }
 
         val packageFqNames = getPackages(contentMap).map { FqName(it) }.toSet()
         if (packageFqNames.isEmpty()) return null
@@ -81,19 +84,14 @@ public object KotlinJavascriptSerializationUtil {
         return byteStream.toByteArray()
     }
 
-    public fun metadataAsString(moduleName: String, moduleDescriptor: ModuleDescriptor): String {
-        val contentMap = hashMapOf<String, ByteArray>()
+    public fun metadataAsString(moduleName: String, moduleDescriptor: ModuleDescriptor): String =
+        KotlinJavascriptMetadataUtils.formatMetadataAsString(moduleName, moduleDescriptor.toBinaryMetadata())
 
-        DescriptorUtils.getPackagesFqNames(moduleDescriptor).forEach {
-            fqName ->
-            serializePackage(moduleDescriptor, fqName) {
-                fileName, stream ->
-                contentMap[fileName] = stream.toByteArray()
-            }
-        }
-
-        val content = KotlinJavascriptSerializationUtil.contentMapToByteArray(contentMap)
-        return KotlinJavascriptMetadataUtils.formatMetadataAsString(moduleName, content)
+    platformStatic
+    public fun writeMetadataFiles(moduleName: String, moduleDescriptor: ModuleDescriptor, outputDir: File) {
+        val contentMap = moduleDescriptor.toContentMap()
+        val outDir = File(outputDir, moduleName)
+        writeFiles(contentMap, outDir)
     }
 
     fun serializePackage(module: ModuleDescriptor, fqName: FqName, writeFun: (String, ByteArrayOutputStream) -> Unit) {
@@ -129,10 +127,56 @@ public object KotlinJavascriptSerializationUtil {
         return BuiltInsSerializationUtil.getClassMetadataPath(classDescriptor.classId)
     }
 
-    private fun getPackageName(filePath: String): String {
-        return filePath.substringBeforeLast('/').replace('/', '.')
+    private fun ModuleDescriptor.toContentMap(): Map<String, ByteArray> {
+        val contentMap = hashMapOf<String, ByteArray>()
+
+        DescriptorUtils.getPackagesFqNames(this).forEach {
+            serializePackage(this, it) {
+                fileName, stream -> contentMap[fileName] = stream.toByteArray()
+            }
+        }
+
+        return contentMap
     }
 
+    private fun ModuleDescriptor.toBinaryMetadata(): ByteArray =
+            KotlinJavascriptSerializationUtil.contentMapToByteArray(this.toContentMap())
+
+    private fun writeFiles(contentMap: Map<String, ByteArray>, outputDir: File) {
+        contentMap.keySet()
+                .filter { isPackageMetadataFile(it) }
+                .filter { contentMap[it]!!.size() > 0 }
+                .forEach {
+                    FileUtil.writeToFile(File(outputDir, replacePackageFileName(it)), contentMap[it]!!)
+                    val stringsFileName = replaceWithStringTableFileName(it)
+                    FileUtil.writeToFile(File(outputDir, stringsFileName), contentMap[stringsFileName]!!)
+                }
+        contentMap.keySet()
+                .filter { it.endsWith(CLASS_METADATA_FILE_EXTENSION) }
+                .forEach {
+                    FileUtil.writeToFile(File(outputDir, replaceClassFileName(it)), contentMap[it]!!)
+                }
+    }
+
+    private fun replaceWithStringTableFileName(fileName: String): String =
+            BuiltInsSerializationUtil.getStringTableFilePath(getPackageFqName(fileName))
+
+    private fun replacePackageFileName(fileName: String): String {
+        val fqName = PackageClassUtils.getPackageClassFqName(getPackageFqName(fileName))
+        return packageFqNameToPath(fqName) + DOT_META_EXT
+    }
+
+    private fun isPackageMetadataFile(fileName: String): Boolean =
+            BuiltInsSerializationUtil.getPackageFilePath(getPackageFqName(fileName)) == fileName
+
+    private fun getPackageFqName(fileName: String): FqName = FqName(getPackageName(fileName))
+
+    private fun replaceClassFileName(fileName: String): String = fileName.substringBeforeLast(CLASS_METADATA_FILE_EXTENSION) + DOT_META_EXT
+
+    private fun getPackageName(filePath: String): String = filePath.substringBeforeLast('/').replace('/', '.')
+
+    private fun packageFqNameToPath(fqName: FqName): String = fqName.asString().replace('.', '/')
+
     private fun getPackages(contentMap: Map<String, ByteArray>): List<String> =
-            contentMap.keySet().filter { it.endsWith(PACKAGE_FILE_EXT) }.map { getPackageName(it) }
+            contentMap.keySet().filter { isPackageMetadataFile(it) }.map { getPackageName(it) }
 }
