@@ -30,6 +30,9 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.serialization.ClassData
 import org.jetbrains.kotlin.serialization.deserialization.ClassDataFinder
 import org.jetbrains.kotlin.serialization.deserialization.LocalClassResolver
+import org.jetbrains.kotlin.serialization.deserialization.NameResolver
+import org.jetbrains.kotlin.serialization.js.JsProtoBufUtil
+import org.jetbrains.kotlin.serialization.js.KotlinJavascriptSerializationUtil
 import org.jetbrains.kotlin.serialization.jvm.JvmProtoBufUtil
 
 class DirectoryBasedClassFinder(
@@ -51,6 +54,19 @@ class DirectoryBasedClassFinder(
     }
 }
 
+class DirectoryBasedKotlinJavascriptMetaFileFinder(
+        val packageDirectory: VirtualFile,
+        val directoryPackageFqName: FqName,
+        val nameResolver: NameResolver
+)  {
+    fun findKotlinJavascriptMetaFile(classId: ClassId): VirtualFile? {
+        if (classId.getPackageFqName() != directoryPackageFqName) return null
+
+        val targetName = classId.getRelativeClassName().pathSegments().joinToString(".", postfix = KotlinJavascriptSerializationUtil.DOT_META_EXT)
+        return packageDirectory.findChild(targetName)
+    }
+}
+
 class DirectoryBasedDataFinder(
         val classFinder: DirectoryBasedClassFinder,
         val log: Logger
@@ -63,6 +79,19 @@ class DirectoryBasedDataFinder(
             return null
         }
         return JvmProtoBufUtil.readClassDataFrom(data)
+    }
+}
+
+class DirectoryBasedKotlinJavascriptDataFinder(
+        val classFinder: DirectoryBasedKotlinJavascriptMetaFileFinder,
+        val log: Logger
+) : ClassDataFinder {
+    override fun findClassData(classId: ClassId): ClassData? {
+        val file = classFinder.findKotlinJavascriptMetaFile(classId)
+        if (file == null) return null
+
+        val content = file.contentsToByteArray(false)
+        return JsProtoBufUtil.getClassData(classFinder.nameResolver, content)
     }
 }
 
