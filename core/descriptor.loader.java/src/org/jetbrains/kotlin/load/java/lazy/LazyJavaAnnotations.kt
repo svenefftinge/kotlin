@@ -36,6 +36,10 @@ class LazyJavaAnnotations(
             if (!fqNameFilter(fqName)) null
             else annotationOwner.findAnnotation(fqName)?.let(annotationDescriptors)
 
+    override fun findExternalAnnotation(fqName: FqName) =
+            if (!fqNameFilter(fqName)) null
+            else c.externalAnnotationResolver.findExternalAnnotation(annotationOwner, fqName)?.let(annotationDescriptors)
+
     override fun iterator() = annotationOwner.getAnnotations()
             .sequence()
             .filter { annotation ->
