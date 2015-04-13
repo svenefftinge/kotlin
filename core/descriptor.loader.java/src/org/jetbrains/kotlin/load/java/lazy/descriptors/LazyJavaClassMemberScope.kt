@@ -107,7 +107,7 @@ public class LazyJavaClassMemberScope(
         val getter = DescriptorFactory.createDefaultGetter(propertyDescriptor)
         propertyDescriptor.initialize(getter, null)
 
-        val returnType = computeMethodReturnType(method, annotations, c.child(propertyDescriptor, method))
+        val returnType = computeMethodReturnType(method, c.child(propertyDescriptor, method))
         propertyDescriptor.setType(returnType, listOf(), getDispatchReceiverParameter(), null : JetType?)
         getter.initialize(returnType)
 
