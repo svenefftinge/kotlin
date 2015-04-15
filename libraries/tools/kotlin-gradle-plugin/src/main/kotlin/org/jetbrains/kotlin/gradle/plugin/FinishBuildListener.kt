@@ -17,18 +17,22 @@
 package org.jetbrains.kotlin.gradle.plugin
 
 import org.gradle.BuildAdapter
-import org.gradle.api.logging.Logging
 import org.gradle.BuildResult
+import org.gradle.api.logging.Logging
 import java.lang.ref.Reference
+import java.util.concurrent.ScheduledExecutorService
 
 class FinishBuildListener(var pluginClassLoader: ParentLastURLClassLoader?) : BuildAdapter() {
     val log = Logging.getLogger(this.javaClass)
+
+    private var threadTracker: ThreadTracker? = ThreadTracker()
 
     override fun buildFinished(result: BuildResult?) {
         log.debug("Build finished listener")
 
         stopZipFileCache()
         stopLowMemoryWatcher()
+        stopJobScheduler()
 
 		// TODO: Try to clean up thread locals without this ugly hack
 		// TODO: Further investigation of PermGen leak (KT-6451)
@@ -36,6 +40,9 @@ class FinishBuildListener(var pluginClassLoader: ParentLastURLClassLoader?) : Bu
 
         pluginClassLoader = null
         result?.getGradle()?.removeListener(this)
+
+        threadTracker?.checkThreadLeak(result?.getGradle())
+        threadTracker = null
     }
 
     public fun removeThreadLocals() {
@@ -72,13 +79,25 @@ class FinishBuildListener(var pluginClassLoader: ParentLastURLClassLoader?) : Bu
     }
 
     private fun stopZipFileCache() {
-        callVoidStaticMethod("com.intellij.openapi.util.io.ZipFileCache", "shutdown")
+        callVoidStaticMethod("com.intellij.openapi.util.io.ZipFileCache", "stopBackgroundThread")
         log.debug("ZipFileCache finished successfully")
     }
 
     private fun stopLowMemoryWatcher() {
-        callVoidStaticMethod("com.intellij.openapi.util.LowMemoryWatcher", "shutdown")
+        callVoidStaticMethod("com.intellij.openapi.util.LowMemoryWatcher", "stopAll")
         log.debug("LowMemoryWatcher finished successfully")
+    }
+
+    private fun stopJobScheduler() {
+        log.debug("Stop JobScheduler")
+
+        val jobSchedulerClass = Class.forName("com.intellij.concurrency.JobScheduler", false, pluginClassLoader)
+
+        val getSchedulerMethod = jobSchedulerClass.getMethod("getScheduler")
+        val executorService = getSchedulerMethod.invoke(this) as ScheduledExecutorService
+
+        executorService.shutdown()
+        log.debug("JobScheduler stopped")
     }
 
     private fun callVoidStaticMethod(classFqName: String, methodName: String) {
