@@ -305,6 +305,8 @@
     <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameKotlinImplicitLambdaParameter"/>
     <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameDynamicMemberHandler"/>
     <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameOnSecondaryConstructorHandler"/>
+    <automaticRenamerFactory implementation="org.jetbrains.kotlin.idea.refactoring.rename.AutomaticVariableRenamerFactory"/>
+    <automaticRenamerFactory implementation="org.jetbrains.kotlin.idea.refactoring.rename.AutomaticInheritorRenamerFactory"/>
 
     <spellchecker.support implementationClass="org.jetbrains.kotlin.idea.KotlinSpellcheckingStrategy" language="jet"/>
 
@@ -338,6 +340,7 @@
     <basicWordSelectionFilter implementation="org.jetbrains.kotlin.idea.editor.wordSelection.KotlinWordSelectionFilter"/>
 
     <typedHandler implementation="org.jetbrains.kotlin.idea.editor.KotlinTypedHandler"/>
+    <typedHandler implementation="org.jetbrains.kotlin.idea.kdoc.KDocTypedHandler"/>
     <enterHandlerDelegate implementation="org.jetbrains.kotlin.idea.editor.KotlinEnterHandler"
                           id="KotlinEnterHandler" order="before EnterBetweenBracesHandler"/>
     <lang.smartEnterProcessor language="jet" implementationClass="org.jetbrains.kotlin.idea.editor.KotlinSmartEnterHandler"/>
