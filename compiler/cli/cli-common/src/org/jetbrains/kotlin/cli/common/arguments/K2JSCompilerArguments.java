@@ -59,6 +59,12 @@ public class K2JSCompilerArguments extends CommonCompilerArguments {
     @ValueDescription("<path>")
     public String outputPostfix;
 
+    // Advanced options
+
+    @Argument(value = "Xgen-metainfo-dir", description = "Generate binary descriptors in output directory")
+    public boolean genMetaInfoDir;
+
+
     @Override
     @NotNull
     public String executableScriptFileName() {

@@ -1,5 +1,6 @@
 Usage: kotlinc-js <options> <source files>
 where advanced options include:
+  -Xgen-metainfo-dir         Generate binary descriptors in output directory
   -Xno-inline                Disable method inlining
   -Xplugin <path>            Load plugins from the given classpath
 
