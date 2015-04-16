@@ -18,13 +18,13 @@ package org.jetbrains.kotlin.idea.caches.resolve
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.PathUtil
 import org.jetbrains.kotlin.analyzer.*
 import org.jetbrains.kotlin.context.GlobalContext
 import org.jetbrains.kotlin.descriptors.impl.CompositePackageFragmentProvider
 import org.jetbrains.kotlin.descriptors.impl.ModuleDescriptorImpl
 import org.jetbrains.kotlin.di.InjectorForLazyResolve
-import org.jetbrains.kotlin.idea.framework.JsHeaderLibraryDetectionUtil
 import org.jetbrains.kotlin.js.analyze.TopDownAnalyzerFacadeForJS
 import org.jetbrains.kotlin.js.resolve.KotlinJsCheckerProvider
 import org.jetbrains.kotlin.platform.PlatformToKotlinClassMap
@@ -53,7 +53,7 @@ public object JsAnalyzerFacade : AnalyzerFacade<JsResolverForModule, PlatformAna
     ): JsResolverForModule {
         val (syntheticFiles, moduleContentScope) = moduleContent
         val declarationProviderFactory = DeclarationProviderFactoryService.createDeclarationProviderFactory(
-                project, globalContext.storageManager, syntheticFiles, moduleContentScope
+                project, globalContext.storageManager, syntheticFiles, if (moduleInfo.isLibrary) GlobalSearchScope.EMPTY_SCOPE else moduleContentScope
         )
 
         val injector = InjectorForLazyResolve(project, globalContext, moduleDescriptor, declarationProviderFactory, BindingTraceContext(),
@@ -62,16 +62,13 @@ public object JsAnalyzerFacade : AnalyzerFacade<JsResolverForModule, PlatformAna
         var packageFragmentProvider = resolveSession.getPackageFragmentProvider()
 
         if (moduleInfo is LibraryInfo) {
-            val files = moduleInfo.library.getFiles(OrderRootType.CLASSES)
-            if (!JsHeaderLibraryDetectionUtil.isJsHeaderLibraryWithSources(files.toList())) {
-                val providers = moduleInfo.library.getFiles(OrderRootType.CLASSES)
-                        .flatMap { KotlinJavascriptMetadataUtils.loadMetadata(PathUtil.getLocalPath(it)!!) }
-                        .map { KotlinJavascriptSerializationUtil.createPackageFragmentProvider(moduleDescriptor, it.body, globalContext.storageManager) }
-                        .filterNotNull()
+            val providers = moduleInfo.library.getFiles(OrderRootType.CLASSES)
+                    .flatMap { KotlinJavascriptMetadataUtils.loadMetadata(PathUtil.getLocalPath(it)!!) }
+                    .map { KotlinJavascriptSerializationUtil.createPackageFragmentProvider(moduleDescriptor, it.body, globalContext.storageManager) }
+                    .filterNotNull()
 
-                if (providers.isNotEmpty()) {
-                    packageFragmentProvider = CompositePackageFragmentProvider(listOf(packageFragmentProvider) + providers)
-                }
+            if (providers.isNotEmpty()) {
+                packageFragmentProvider = CompositePackageFragmentProvider(listOf(packageFragmentProvider) + providers)
             }
         }
 
