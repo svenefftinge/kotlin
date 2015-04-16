@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-package org.jetbrains.kotlin.idea;
+package org.jetbrains.kotlin.cli.jvm.compiler
 
-import com.intellij.openapi.fileTypes.FileTypeConsumer;
-import com.intellij.openapi.fileTypes.FileTypeFactory;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.load.kotlin.VirtualFileFinder
+import org.jetbrains.kotlin.load.kotlin.VirtualFileFinderFactory
 
-
-public class JetFileFactory extends FileTypeFactory {
-    @Override
-    public void createFileTypes(@NotNull FileTypeConsumer consumer) {
-        consumer.consume(JetFileType.INSTANCE, "kt;kts");
+public class CliVirtualFileFinderFactory(private val index: JvmDependenciesIndex) : VirtualFileFinderFactory {
+    override fun create(scope: GlobalSearchScope): VirtualFileFinder {
+        return CliVirtualFileFinder(index)
     }
 }

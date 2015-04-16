@@ -14,16 +14,13 @@
  * limitations under the License.
  */
 
-package org.jetbrains.kotlin.idea;
+package org.jetbrains.kotlin.resolve.jvm
 
-import com.intellij.openapi.fileTypes.FileTypeConsumer;
-import com.intellij.openapi.fileTypes.FileTypeFactory;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.PsiClass
+import com.intellij.psi.impl.file.impl.JavaFileManager
+import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.name.ClassId
 
-
-public class JetFileFactory extends FileTypeFactory {
-    @Override
-    public void createFileTypes(@NotNull FileTypeConsumer consumer) {
-        consumer.consume(JetFileType.INSTANCE, "kt;kts");
-    }
+public trait KotlinCliJavaFileManager : JavaFileManager {
+    public fun findClass(classId: ClassId, searchScope: GlobalSearchScope): PsiClass?
 }
