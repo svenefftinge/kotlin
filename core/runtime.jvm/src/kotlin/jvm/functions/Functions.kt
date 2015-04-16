@@ -16,7 +16,7 @@
 
 // Auto-generated file. DO NOT EDIT!
 
-package kotlin
+package kotlin.jvm.functions
 
 /** A function that takes 0 arguments. */
 public trait Function0<out R> : Function<R> {
