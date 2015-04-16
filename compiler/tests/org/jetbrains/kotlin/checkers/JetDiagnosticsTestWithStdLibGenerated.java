@@ -175,6 +175,168 @@ public class JetDiagnosticsTestWithStdLibGenerated extends AbstractJetDiagnostic
             }
         }
 
+        @TestMetadata("compiler/testData/diagnostics/testsWithStdLib/annotations/annotationsWithJavaLangClassParameterOverload")
+        @TestDataPath("$PROJECT_ROOT")
+        @RunWith(JUnit3RunnerWithInners.class)
+        public static class AnnotationsWithJavaLangClassParameterOverload extends AbstractJetDiagnosticsTestWithStdLib {
+            public void testAllFilesPresentInAnnotationsWithJavaLangClassParameterOverload() throws Exception {
+                JetTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/diagnostics/testsWithStdLib/annotations/annotationsWithJavaLangClassParameterOverload"), Pattern.compile("^(.+)\\.kt$"), true);
+            }
+
+            @TestMetadata("annotationAsArgument.kt")
+            public void testAnnotationAsArgument() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/testsWithStdLib/annotations/annotationsWithJavaLangClassParameterOverload/annotationAsArgument.kt");
+                doTest(fileName);
+            }
+
+            @TestMetadata("arg.kt")
+            public void testArg() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/testsWithStdLib/annotations/annotationsWithJavaLangClassParameterOverload/arg.kt");
+                doTest(fileName);
+            }
+
+            @TestMetadata("argAndOtherDefault.kt")
+            public void testArgAndOtherDefault() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/testsWithStdLib/annotations/annotationsWithJavaLangClassParameterOverload/argAndOtherDefault.kt");
+                doTest(fileName);
+            }
+
+            @TestMetadata("argArray.kt")
+            public void testArgArray() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/testsWithStdLib/annotations/annotationsWithJavaLangClassParameterOverload/argArray.kt");
+                doTest(fileName);
+            }
+
+            @TestMetadata("argWithDefault.kt")
+            public void testArgWithDefault() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/testsWithStdLib/annotations/annotationsWithJavaLangClassParameterOverload/argWithDefault.kt");
+                doTest(fileName);
+            }
+
+            @TestMetadata("argWithDefaultAndOther.kt")
+            public void testArgWithDefaultAndOther() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/testsWithStdLib/annotations/annotationsWithJavaLangClassParameterOverload/argWithDefaultAndOther.kt");
+                doTest(fileName);
+            }
+
+            @TestMetadata("twoArgs.kt")
+            public void testTwoArgs() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/testsWithStdLib/annotations/annotationsWithJavaLangClassParameterOverload/twoArgs.kt");
+                doTest(fileName);
+            }
+
+            @TestMetadata("value.kt")
+            public void testValue() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/testsWithStdLib/annotations/annotationsWithJavaLangClassParameterOverload/value.kt");
+                doTest(fileName);
+            }
+
+            @TestMetadata("valueAndOtherDefault.kt")
+            public void testValueAndOtherDefault() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/testsWithStdLib/annotations/annotationsWithJavaLangClassParameterOverload/valueAndOtherDefault.kt");
+                doTest(fileName);
+            }
+
+            @TestMetadata("valueArray.kt")
+            public void testValueArray() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/testsWithStdLib/annotations/annotationsWithJavaLangClassParameterOverload/valueArray.kt");
+                doTest(fileName);
+            }
+
+            @TestMetadata("valueWithDefault.kt")
+            public void testValueWithDefault() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/testsWithStdLib/annotations/annotationsWithJavaLangClassParameterOverload/valueWithDefault.kt");
+                doTest(fileName);
+            }
+
+            @TestMetadata("valueWithDefaultAndOther.kt")
+            public void testValueWithDefaultAndOther() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/testsWithStdLib/annotations/annotationsWithJavaLangClassParameterOverload/valueWithDefaultAndOther.kt");
+                doTest(fileName);
+            }
+        }
+
+        @TestMetadata("compiler/testData/diagnostics/testsWithStdLib/annotations/javaAnnotationsWithKClassParameter")
+        @TestDataPath("$PROJECT_ROOT")
+        @RunWith(JUnit3RunnerWithInners.class)
+        public static class JavaAnnotationsWithKClassParameter extends AbstractJetDiagnosticsTestWithStdLib {
+            public void testAllFilesPresentInJavaAnnotationsWithKClassParameter() throws Exception {
+                JetTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/diagnostics/testsWithStdLib/annotations/javaAnnotationsWithKClassParameter"), Pattern.compile("^(.+)\\.kt$"), true);
+            }
+
+            @TestMetadata("annotationAsArgument.kt")
+            public void testAnnotationAsArgument() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/testsWithStdLib/annotations/javaAnnotationsWithKClassParameter/annotationAsArgument.kt");
+                doTest(fileName);
+            }
+
+            @TestMetadata("arg.kt")
+            public void testArg() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/testsWithStdLib/annotations/javaAnnotationsWithKClassParameter/arg.kt");
+                doTest(fileName);
+            }
+
+            @TestMetadata("argAndOtherDefault.kt")
+            public void testArgAndOtherDefault() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/testsWithStdLib/annotations/javaAnnotationsWithKClassParameter/argAndOtherDefault.kt");
+                doTest(fileName);
+            }
+
+            @TestMetadata("argArray.kt")
+            public void testArgArray() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/testsWithStdLib/annotations/javaAnnotationsWithKClassParameter/argArray.kt");
+                doTest(fileName);
+            }
+
+            @TestMetadata("argWithDefault.kt")
+            public void testArgWithDefault() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/testsWithStdLib/annotations/javaAnnotationsWithKClassParameter/argWithDefault.kt");
+                doTest(fileName);
+            }
+
+            @TestMetadata("argWithDefaultAndOther.kt")
+            public void testArgWithDefaultAndOther() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/testsWithStdLib/annotations/javaAnnotationsWithKClassParameter/argWithDefaultAndOther.kt");
+                doTest(fileName);
+            }
+
+            @TestMetadata("twoArgs.kt")
+            public void testTwoArgs() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/testsWithStdLib/annotations/javaAnnotationsWithKClassParameter/twoArgs.kt");
+                doTest(fileName);
+            }
+
+            @TestMetadata("value.kt")
+            public void testValue() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/testsWithStdLib/annotations/javaAnnotationsWithKClassParameter/value.kt");
+                doTest(fileName);
+            }
+
+            @TestMetadata("valueAndOtherDefault.kt")
+            public void testValueAndOtherDefault() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/testsWithStdLib/annotations/javaAnnotationsWithKClassParameter/valueAndOtherDefault.kt");
+                doTest(fileName);
+            }
+
+            @TestMetadata("valueArray.kt")
+            public void testValueArray() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/testsWithStdLib/annotations/javaAnnotationsWithKClassParameter/valueArray.kt");
+                doTest(fileName);
+            }
+
+            @TestMetadata("valueWithDefault.kt")
+            public void testValueWithDefault() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/testsWithStdLib/annotations/javaAnnotationsWithKClassParameter/valueWithDefault.kt");
+                doTest(fileName);
+            }
+
+            @TestMetadata("valueWithDefaultAndOther.kt")
+            public void testValueWithDefaultAndOther() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/testsWithStdLib/annotations/javaAnnotationsWithKClassParameter/valueWithDefaultAndOther.kt");
+                doTest(fileName);
+            }
+        }
+
         @TestMetadata("compiler/testData/diagnostics/testsWithStdLib/annotations/jvmOverloads")
         @TestDataPath("$PROJECT_ROOT")
         @RunWith(JUnit3RunnerWithInners.class)
@@ -198,6 +360,57 @@ public class JetDiagnosticsTestWithStdLibGenerated extends AbstractJetDiagnostic
             @TestMetadata("jvmOverloadsOnPrivate.kt")
             public void testJvmOverloadsOnPrivate() throws Exception {
                 String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/testsWithStdLib/annotations/jvmOverloads/jvmOverloadsOnPrivate.kt");
+                doTest(fileName);
+            }
+        }
+
+        @TestMetadata("compiler/testData/diagnostics/testsWithStdLib/annotations/kClass")
+        @TestDataPath("$PROJECT_ROOT")
+        @RunWith(JUnit3RunnerWithInners.class)
+        public static class KClass extends AbstractJetDiagnosticsTestWithStdLib {
+            public void testAllFilesPresentInKClass() throws Exception {
+                JetTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/diagnostics/testsWithStdLib/annotations/kClass"), Pattern.compile("^(.+)\\.kt$"), true);
+            }
+
+            @TestMetadata("kClassArrayInAnnotationsInVariance.kt")
+            public void testKClassArrayInAnnotationsInVariance() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/testsWithStdLib/annotations/kClass/kClassArrayInAnnotationsInVariance.kt");
+                doTest(fileName);
+            }
+
+            @TestMetadata("kClassArrayInAnnotationsOutVariance.kt")
+            public void testKClassArrayInAnnotationsOutVariance() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/testsWithStdLib/annotations/kClass/kClassArrayInAnnotationsOutVariance.kt");
+                doTest(fileName);
+            }
+
+            @TestMetadata("kClassInAnnotation.kt")
+            public void testKClassInAnnotation() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/testsWithStdLib/annotations/kClass/kClassInAnnotation.kt");
+                doTest(fileName);
+            }
+
+            @TestMetadata("kClassInAnnotationsInVariance.kt")
+            public void testKClassInAnnotationsInVariance() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/testsWithStdLib/annotations/kClass/kClassInAnnotationsInVariance.kt");
+                doTest(fileName);
+            }
+
+            @TestMetadata("kClassInAnnotationsOutVariance.kt")
+            public void testKClassInAnnotationsOutVariance() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/testsWithStdLib/annotations/kClass/kClassInAnnotationsOutVariance.kt");
+                doTest(fileName);
+            }
+
+            @TestMetadata("kClassInvariantTP.kt")
+            public void testKClassInvariantTP() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/testsWithStdLib/annotations/kClass/kClassInvariantTP.kt");
+                doTest(fileName);
+            }
+
+            @TestMetadata("kClassOutArrayInAnnotationsOutVariance.kt")
+            public void testKClassOutArrayInAnnotationsOutVariance() throws Exception {
+                String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/testsWithStdLib/annotations/kClass/kClassOutArrayInAnnotationsOutVariance.kt");
                 doTest(fileName);
             }
         }
