@@ -16,59 +16,53 @@
 
 package org.jetbrains.kotlin.idea.intentions
 
-import org.jetbrains.kotlin.psi.JetBlockExpression
-import org.jetbrains.kotlin.psi.JetPsiFactory
-import org.jetbrains.kotlin.psi.JetExpressionImpl
 import com.intellij.openapi.editor.Editor
-import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiWhiteSpace
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
-public class RemoveBracesIntention : JetSelfTargetingIntention<JetExpressionImpl>("remove.braces", javaClass()) {
-    override fun isApplicableTo(element: JetExpressionImpl): Boolean {
-        throw IllegalStateException("isApplicableTo(JetExpressionImpl, Editor) should be called instead")
+public class RemoveBracesIntention : JetSelfTargetingIntention<JetBlockExpression>(javaClass(), "Remove braces") {
+    override fun isApplicableTo(element: JetBlockExpression, caretOffset: Int): Boolean {
+        if (element.getStatements().size() != 1) return false
+
+        val containerNode = element.getParent() as? JetContainerNode ?: return false
+
+        val lBrace = element.getLBrace() ?: return false
+        val rBrace = element.getRBrace() ?: return false
+        if (!lBrace.getTextRange().containsOffset(caretOffset) && !rBrace.getTextRange().containsOffset(caretOffset)) return false
+
+        val description = containerNode.description() ?: return false
+        setText("Remove braces from '$description' statement")
+        return true
     }
 
-    override fun isApplicableTo(element: JetExpressionImpl, editor: Editor): Boolean {
-        val expressionKind = element.getExpressionKind(editor.getCaretModel().getOffset())
-        if (expressionKind == null) return false
+    override fun applyTo(element: JetBlockExpression, editor: Editor) {
+        val statement = element.getStatements().single()
 
-        val jetBlockElement = element.findBlockInExpression(expressionKind)
-        if (jetBlockElement == null) return false
+        val containerNode = element.getParent() as JetContainerNode
+        val construct = containerNode.getParent() as JetExpression
+        handleComments(construct, element)
 
-        if (jetBlockElement.getStatements().size == 1) {
-            setText("Remove braces from '${expressionKind.text}' statement")
-            return true
-        }
-        return false
-    }
+        val newElement = element.replace(statement.copy())
 
-    override fun applyTo(element: JetExpressionImpl, editor: Editor) {
-        val expressionKind = element.getExpressionKind(editor.getCaretModel().getOffset())!!
-
-        val jetBlockElement = element.findBlockInExpression(expressionKind)
-        val firstStatement = jetBlockElement!!.getStatements().first()
-
-        handleComments(element, jetBlockElement)
-
-        val newElement = jetBlockElement.replace(firstStatement.copy())
-
-        if (expressionKind == ExpressionKind.DOWHILE) {
+        if (construct is JetDoWhileExpression) {
             newElement.getParent()!!.addAfter(JetPsiFactory(element).createNewLine(), newElement)
         }
     }
 
-    fun handleComments(element: JetExpressionImpl, blockElement: JetBlockExpression) {
-        var sibling = blockElement.getFirstChild()?.getNextSibling()
+    private fun handleComments(construct: JetExpression, block: JetBlockExpression) {
+        var sibling = block.getFirstChild()?.getNextSibling()
 
         while (sibling != null) {
             if (sibling is PsiComment) {
                 //cleans up extra whitespace
-                val psiFactory = JetPsiFactory(element)
-                if (element.getPrevSibling() is PsiWhiteSpace) {
-                    element.getPrevSibling()!!.replace(psiFactory.createNewLine())
+                val psiFactory = JetPsiFactory(construct)
+                if (construct.getPrevSibling() is PsiWhiteSpace) {
+                    construct.getPrevSibling()!!.replace(psiFactory.createNewLine())
                 }
-                val commentElement = element.getParent()!!.addBefore(sibling as PsiComment, element.getPrevSibling())
-                element.getParent()!!.addBefore(psiFactory.createNewLine(), commentElement)
+                val commentElement = construct.getParent()!!.addBefore(sibling as PsiComment, construct.getPrevSibling())
+                construct.getParent()!!.addBefore(psiFactory.createNewLine(), commentElement)
             }
             sibling = sibling!!.getNextSibling()
         }

@@ -16,46 +16,90 @@
 
 package org.jetbrains.kotlin.idea.intentions
 
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.psi.JetElement
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.JetBundle
+import org.jetbrains.kotlin.psi.JetElement
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypesAndPredicate
-import com.intellij.codeInsight.intention.IntentionAction
+import org.jetbrains.kotlin.psi.psiUtil.parents
 
-public abstract class JetSelfTargetingIntention<T: JetElement>(protected val key: String, val elementType: Class<T>) : IntentionAction {
-    private var myText:String = JetBundle.message(key);
+public abstract class JetSelfTargetingIntention<TElement : JetElement>(
+        public val elementType: Class<TElement>,
+        private var text: String,
+        private val familyName: String = text,
+        private val firstElementOfTypeOnly: Boolean = false
+) : IntentionAction {
+    deprecated("Use primary constructor, no need to use i18n")
+    public constructor(key: String, elementType: Class<TElement>) : this(elementType, JetBundle.message(key), JetBundle.message(key + ".family")) {
+    }
+
     protected fun setText(text: String) {
-        myText = text
+        this.text = text
     }
-    override fun getText(): String = myText
 
-    public abstract fun isApplicableTo(element: T): Boolean
-    public open fun isApplicableTo(element: T, editor: Editor): Boolean = isApplicableTo(element)
-    public abstract fun applyTo(element: T, editor: Editor)
+    final override fun getText() = text
+    final override fun getFamilyName() = familyName
 
-    protected fun getTarget(editor: Editor, file: PsiFile): T? {
+    public abstract fun isApplicableTo(element: TElement, caretOffset: Int): Boolean
+
+    public abstract fun applyTo(element: TElement, editor: Editor)
+
+    private fun getTarget(editor: Editor, file: PsiFile): TElement? {
         val offset = editor.getCaretModel().getOffset()
-        return file.findElementAt(offset)?.getParentOfTypesAndPredicate(false, elementType) { element -> isApplicableTo(element, editor) }
+        val leaf1 = file.findElementAt(offset)
+        val leaf2 = file.findElementAt(offset - 1)
+        val commonParent = if (leaf1 != null && leaf2 != null) PsiTreeUtil.findCommonParent(leaf1, leaf2) else null
+
+        var elementsToCheck: Sequence<PsiElement> = sequence { null }
+        if (leaf1 != null) {
+            elementsToCheck += leaf1.parents().takeWhile { it != commonParent }
+        }
+        if (leaf2 != null) {
+            elementsToCheck += leaf2.parents().takeWhile { it != commonParent }
+        }
+        if (commonParent != null) {
+            elementsToCheck += commonParent.parents()
+        }
+
+        val elementsOfType = elementsToCheck.filterIsInstance(elementType)
+        if (firstElementOfTypeOnly) {
+            val candidate = elementsOfType.firstOrNull() ?: return null
+            return if (isApplicableTo(candidate, offset)) candidate else null
+        }
+        else {
+            return elementsOfType.firstOrNull { isApplicableTo(it, offset) }
+        }
     }
 
-    public override fun getFamilyName(): String {
-        return JetBundle.message(key + ".family")
+    final override fun isAvailable(project: Project, editor: Editor, file: PsiFile)
+            = getTarget(editor, file) != null
+
+    final override fun invoke(project: Project, editor: Editor, file: PsiFile): Unit {
+        val target = getTarget(editor, file) ?: error("Intention is not applicable")
+        applyTo(target, editor)
     }
 
-    public override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
-        return getTarget(editor, file) != null
-    }
-
-    public override fun invoke(project: Project, editor: Editor, file: PsiFile): Unit {
-        val target = getTarget(editor, file)
-        assert(target != null, "Intention is not applicable")
-
-        applyTo(target!!, editor)
-    }
-
-    override fun startInWriteAction(): Boolean = true
+    override fun startInWriteAction() = true
 
     override fun toString(): String = getText()
+}
+
+public abstract class JetSelfTargetingOffsetIndependentIntention<TElement : JetElement>(
+        elementType: Class<TElement>,
+        text: String,
+        familyName: String = text,
+        firstElementOfTypeOnly: Boolean = false
+) : JetSelfTargetingIntention<TElement>(elementType, text, familyName, firstElementOfTypeOnly) {
+
+    deprecated("Use primary constructor, no need to use i18n")
+    public constructor(key: String, elementType: Class<TElement>) : this(elementType, JetBundle.message(key), JetBundle.message(key + ".family")) {
+    }
+
+    public abstract fun isApplicableTo(element: TElement): Boolean
+
+    override final fun isApplicableTo(element: TElement, caretOffset: Int): Boolean = isApplicableTo(element)
 }

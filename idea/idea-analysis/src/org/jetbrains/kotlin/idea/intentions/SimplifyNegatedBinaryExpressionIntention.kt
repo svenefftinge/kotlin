@@ -30,7 +30,7 @@ import org.jetbrains.kotlin.psi.JetPsiUtil
 import org.jetbrains.kotlin.idea.JetBundle
 import org.jetbrains.kotlin.psi.JetPsiFactory
 
-public class SimplifyNegatedBinaryExpressionIntention : JetSelfTargetingIntention<JetPrefixExpression>("simplify.negated.binary.expression", javaClass()) {
+public class SimplifyNegatedBinaryExpressionIntention : JetSelfTargetingOffsetIndependentIntention<JetPrefixExpression>("simplify.negated.binary.expression", javaClass()) {
 
     private fun JetPrefixExpression.unparenthesize(): JetExpression? {
         return (this.getBaseExpression() as? JetParenthesizedExpression)?.getExpression()
@@ -64,7 +64,7 @@ public class SimplifyNegatedBinaryExpressionIntention : JetSelfTargetingIntentio
         val operation = (JetPsiUtil.getOperationToken(expression) as? JetSingleValueToken) ?: return false
         val negOperation = operation.negate() ?: return false
 
-        setText(JetBundle.message(key, operation.getValue(), negOperation.getValue()))
+        setText(JetBundle.message("simplify.negated.binary.expression", operation.getValue(), negOperation.getValue()))
         return true
     }
 
