@@ -23,12 +23,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.diagnostics.DiagnosticSink;
 import org.jetbrains.kotlin.js.inline.context.*;
+import org.jetbrains.kotlin.js.inline.util.ExpressionDecomposer;
 import org.jetbrains.kotlin.js.resolve.diagnostics.ErrorsJs;
 import org.jetbrains.kotlin.js.translate.context.TranslationContext;
 import org.jetbrains.kotlin.resolve.inline.InlineStrategy;
 
 import java.util.*;
+import kotlin.Function1;
 
+import static org.jetbrains.kotlin.js.inline.FunctionInlineMutator.canBeExpression;
 import static org.jetbrains.kotlin.js.inline.FunctionInlineMutator.getInlineableCallReplacement;
 import static org.jetbrains.kotlin.js.inline.clean.CleanPackage.removeUnusedFunctionDefinitions;
 import static org.jetbrains.kotlin.js.inline.clean.CleanPackage.removeUnusedLocalFunctionDeclarations;
@@ -47,36 +50,21 @@ public class JsInliner extends JsVisitorWithContextImpl {
     // these are needed for error reporting, when inliner detects cycle
     private final Stack<JsFunction> namedFunctionsStack = new Stack<JsFunction>();
     private final LinkedList<JsCallInfo> inlineCallInfos = new LinkedList<JsCallInfo>();
+    private final Function1<JsNode, Boolean> canBeExtractedByInliner = new Function1<JsNode, Boolean>() {
+        @Override
+        public Boolean invoke(JsNode node) {
+            if (!(node instanceof JsInvocation)) return false;
 
-    /**
-     * A statement can contain more, than one inlineable sub-expressions.
-     * When inline call is expanded, current statement is shifted forward,
-     * but still has same statement context with same index on stack.
-     *
-     * The shifting is intentional, because there could be function literals,
-     * that need to be inlined, after expansion.
-     *
-     * After shifting following inline expansion in the same statement could be
-     * incorrect, because wrong statement index is used.
-     *
-     * To prevent this, after every shift this flag is set to true,
-     * so that visitor wont go deeper until statement is visited.
-     *
-     * Example:
-     *  inline fun f(g: () -> Int): Int { val a = g(); return a }
-     *  inline fun Int.abs(): Int = if (this < 0) -this else this
-     *
-     *  val g = { 10 }
-     *  >> val h = f(g).abs()    // last statement context index
-     *
-     *  val g = { 10 }           // after inline
-     *  >> val f$result          // statement index was not changed
-     *  val a = g()
-     *  f$result = a
-     *  val h = f$result.abs()   // current expression still here; incorrect to inline abs(),
-     *                           //  because statement context on stack point to different statement
-     */
-    private boolean lastStatementWasShifted = false;
+            JsInvocation call = (JsInvocation) node;
+
+            if (hasToBeInlined(call)) {
+                JsFunction function = getFunctionContext().getFunctionDefinition(call);
+                return !canBeExpression(function);
+            }
+
+            return false;
+        }
+    };
 
     public static JsProgram process(@NotNull TranslationContext context) {
         JsProgram program = context.program();
@@ -98,7 +86,7 @@ public class JsInliner extends JsVisitorWithContextImpl {
     }
 
     @Override
-    public boolean visit(JsFunction function, JsContext context) {
+    public boolean visit(@NotNull JsFunction function, @NotNull JsContext context) {
         inliningContexts.push(new JsInliningContext(function));
         assert !inProcessFunctions.contains(function): "Inliner has revisited function";
         inProcessFunctions.add(function);
@@ -111,7 +99,7 @@ public class JsInliner extends JsVisitorWithContextImpl {
     }
 
     @Override
-    public void endVisit(JsFunction function, JsContext context) {
+    public void endVisit(@NotNull JsFunction function, @NotNull JsContext context) {
         super.endVisit(function, context);
         refreshLabelNames(getInliningContext().newNamingContext(), function);
 
@@ -129,32 +117,33 @@ public class JsInliner extends JsVisitorWithContextImpl {
     }
 
     @Override
-    public boolean visit(JsInvocation call, JsContext context) {
-        if (shouldInline(call) && canInline(call)) {
-            JsFunction containingFunction = getCurrentNamedFunction();
-            if (containingFunction != null) {
-                inlineCallInfos.add(new JsCallInfo(call, containingFunction));
-            }
+    public boolean visit(@NotNull JsInvocation call, @NotNull JsContext context) {
+        if (!hasToBeInlined(call)) return true;
 
-            JsFunction definition = getFunctionContext().getFunctionDefinition(call);
+        JsFunction containingFunction = getCurrentNamedFunction();
 
-            if (inProcessFunctions.contains(definition))  {
-                reportInlineCycle(call, definition);
-                return false;
-            }
-
-            if (!processedFunctions.contains(definition)) {
-                accept(definition);
-            }
-
-            inline(call, context);
+        if (containingFunction != null) {
+            inlineCallInfos.add(new JsCallInfo(call, containingFunction));
         }
 
-        return !lastStatementWasShifted;
+        JsFunction definition = getFunctionContext().getFunctionDefinition(call);
+
+        if (inProcessFunctions.contains(definition))  {
+            reportInlineCycle(call, definition);
+        }
+        else if (!processedFunctions.contains(definition)) {
+            accept(definition);
+        }
+
+        return true;
     }
 
     @Override
-    public void endVisit(JsInvocation x, JsContext ctx) {
+    public void endVisit(@NotNull JsInvocation x, @NotNull JsContext ctx) {
+        if (hasToBeInlined(x)) {
+            inline(x, ctx);
+        }
+
         JsCallInfo lastCallInfo = null;
 
         if (!inlineCallInfos.isEmpty()) {
@@ -166,6 +155,25 @@ public class JsInliner extends JsVisitorWithContextImpl {
         }
     }
 
+    @Override
+    protected void doAcceptStatementList(List<JsStatement> statements) {
+        // at top level of js ast, contexts stack can be empty,
+        // but there is no inline calls anyway
+        if(!inliningContexts.isEmpty()) {
+            JsScope scope = getFunctionContext().getScope();
+            int i = 0;
+
+            while (i < statements.size()) {
+                List<JsStatement> additionalStatements =
+                        ExpressionDecomposer.preserveEvaluationOrder(scope, statements.get(i), canBeExtractedByInliner);
+                statements.addAll(i, additionalStatements);
+                i += additionalStatements.size() + 1;
+            }
+        }
+
+        super.doAcceptStatementList(statements);
+    }
+
     private void inline(@NotNull JsInvocation call, @NotNull JsContext context) {
         JsInliningContext inliningContext = getInliningContext();
         FunctionContext functionContext = getFunctionContext();
@@ -174,39 +182,24 @@ public class JsInliner extends JsVisitorWithContextImpl {
 
         JsStatement inlineableBody = inlineableResult.getInlineableBody();
         JsExpression resultExpression = inlineableResult.getResultExpression();
-        StatementContext statementContext = inliningContext.getStatementContext();
-        accept(inlineableBody);
+        JsContext<JsStatement> statementContext = inliningContext.getStatementContext();
+        // body of inline function can contain call to lambdas that need to be inlined
+        JsStatement statement = accept(inlineableBody);
+        assert inlineableBody == statement;
+
+        statementContext.addPrevious(flattenStatement(inlineableBody));
 
         /**
          * Assumes, that resultExpression == null, when result is not needed.
          * @see FunctionInlineMutator.isResultNeeded()
          */
         if (resultExpression == null) {
-            statementContext.removeCurrentStatement();
-        } else {
-            context.replaceMe(resultExpression);
+            statementContext.removeMe();
+            return;
         }
 
-        /** @see #lastStatementWasShifted */
-        statementContext.shiftCurrentStatementForward();
-        InsertionPoint<JsStatement> insertionPoint = statementContext.getInsertionPoint();
-        insertionPoint.insertAllAfter(flattenStatement(inlineableBody));
-    }
-
-    /**
-     * Prevents JsInliner from traversing sub-expressions,
-     * when current statement was shifted forward.
-     */
-    @Override
-    protected <T extends JsNode> void doTraverse(T node, JsContext ctx) {
-        if (node instanceof JsStatement) {
-            /** @see #lastStatementWasShifted */
-            lastStatementWasShifted = false;
-        }
-
-        if (!lastStatementWasShifted) {
-            super.doTraverse(node, ctx);
-        }
+        resultExpression = accept(resultExpression);
+        context.replaceMe(resultExpression);
     }
 
     @NotNull
@@ -242,14 +235,11 @@ public class JsInliner extends JsVisitorWithContextImpl {
         }
     }
 
-    private boolean canInline(@NotNull JsInvocation call) {
-        FunctionContext functionContext = getFunctionContext();
-        return functionContext.hasFunctionDefinition(call);
-    }
-
-    private static boolean shouldInline(@NotNull JsInvocation call) {
+    public boolean hasToBeInlined(@NotNull JsInvocation call) {
         InlineStrategy strategy = MetadataPackage.getInlineStrategy(call);
-        return strategy != null && strategy.isInline();
+        if (strategy == null || !strategy.isInline()) return false;
+
+        return getFunctionContext().hasFunctionDefinition(call);
     }
 
     private class JsInliningContext implements InliningContext {
@@ -269,32 +259,13 @@ public class JsInliner extends JsVisitorWithContextImpl {
         @Override
         public NamingContext newNamingContext() {
             JsScope scope = getFunctionContext().getScope();
-            InsertionPoint<JsStatement> insertionPoint = getStatementContext().getInsertionPoint();
-            return new NamingContext(scope, insertionPoint);
+            return new NamingContext(scope, getStatementContext());
         }
 
         @NotNull
         @Override
-        public StatementContext getStatementContext() {
-            return new StatementContext() {
-                @NotNull
-                @Override
-                public JsContext getCurrentStatementContext() {
-                    return getLastStatementLevelContext();
-                }
-
-                @NotNull
-                @Override
-                protected JsStatement getEmptyStatement() {
-                    return getFunctionContext().getEmpty();
-                }
-
-                @Override
-                public void shiftCurrentStatementForward() {
-                    super.shiftCurrentStatementForward();
-                    lastStatementWasShifted = true;
-                }
-            };
+        public JsContext<JsStatement> getStatementContext() {
+            return getLastStatementLevelContext();
         }
 
         @NotNull

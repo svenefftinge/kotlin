@@ -26,113 +26,90 @@ import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Stack;
+import java.util.*;
 
 /**
  * A visitor for iterating through and modifying an AST.
  */
 public class JsVisitorWithContextImpl extends JsVisitorWithContext {
 
-    private final Stack<JsContext> statementContexts = new Stack<JsContext>();
+    private final Stack<JsContext<JsStatement>> statementContexts = new Stack<JsContext<JsStatement>>();
 
-    public class ListContext<T extends JsNode> implements JsContext {
-        private List<T> collection;
+    public class ListContext<T extends JsNode> extends JsContext<T> {
+        private List<T> nodes;
         private int index;
 
+        // Those are reset in every iteration of traverse()
+        private final List<T> previous = new SmartList<T>();
+        private final List<T> next = new SmartList<T>();
+        private boolean removed = false;
+
         @Override
-        public boolean canInsert() {
-            return true;
+        public <R extends T> void addPrevious(R node) {
+            previous.add(node);
         }
 
         @Override
-        public boolean canRemove() {
-            return true;
-        }
-
-        @Override
-        public void insertAfter(JsNode node) {
-            //noinspection unchecked
-            collection.add(index + 1, (T) node);
-        }
-
-        @Override
-        public void insertBefore(JsNode node) {
-            //noinspection unchecked
-            collection.add(index++, (T) node);
-        }
-
-        @Override
-        public boolean isLvalue() {
-            return false;
+        public <R extends T> void addNext(R node) {
+            next.add(node);
         }
 
         @Override
         public void removeMe() {
-            collection.remove(index--);
+            removed = true;
         }
 
         @Override
-        public void replaceMe(JsNode node) {
-            checkReplacement(collection.get(index), node);
-            //noinspection unchecked
-            collection.set(index, (T) node);
+        public <R extends T> void replaceMe(R node) {
+            checkReplacement(nodes.get(index), node);
+            nodes.set(index, node);
+            removed = false;
         }
         
         @Nullable
         @Override
-        public JsNode getCurrentNode() {
-            if (index < collection.size()) {
-                return collection.get(index);
+        public T getCurrentNode() {
+            if (!removed && index < nodes.size()) {
+                return nodes.get(index);
             }
 
             return null;
         }
 
-        protected void traverse(List<T> collection) {
-            this.collection = collection;
-            for (index = 0; index < collection.size(); ++index) {
-                T node = collection.get(index);
-                doTraverse(node, this);
+        protected void traverse(List<T> nodes) {
+            assert previous.isEmpty(): "addPrevious() was called before traverse()";
+            assert next.isEmpty(): "addNext() was called before traverse()";
+            this.nodes = nodes;
+
+            for (index = 0; index < nodes.size(); index++) {
+                removed = false;
+                previous.clear();
+                next.clear();
+                doTraverse(getCurrentNode(), this);
+
+                if (!previous.isEmpty()) {
+                    nodes.addAll(index, previous);
+                    index += previous.size();
+                }
+
+                if (removed) {
+                    nodes.remove(index);
+                    index--;
+                }
+
+                if (!next.isEmpty()) {
+                    nodes.addAll(index + 1, next);
+                    index += next.size();
+                }
             }
         }
     }
 
     private class LvalueContext extends NodeContext<JsExpression> {
-        @Override
-        public boolean isLvalue() {
-            return true;
-        }
     }
 
-    @SuppressWarnings("unchecked")
-    private class NodeContext<T extends JsNode> implements JsContext {
+    private class NodeContext<T extends JsNode> extends JsContext<T> {
         protected T node;
-
-        @Override
-        public boolean canInsert() {
-            return false;
-        }
-
-        @Override
-        public boolean canRemove() {
-            return false;
-        }
-
-        @Override
-        public void insertAfter(JsNode node) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void insertBefore(JsNode node) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public boolean isLvalue() {
-            return false;
-        }
 
         @Override
         public void removeMe() {
@@ -140,14 +117,14 @@ public class JsVisitorWithContextImpl extends JsVisitorWithContext {
         }
 
         @Override
-        public void replaceMe(JsNode node) {
+        public <R extends T> void replaceMe(R node) {
             checkReplacement(this.node, node);
-            this.node = (T) node;
+            this.node = node;
         }
 
         @Nullable
         @Override
-        public JsNode getCurrentNode() {
+        public T getCurrentNode() {
             return node;
         }
 
@@ -185,8 +162,8 @@ public class JsVisitorWithContextImpl extends JsVisitorWithContext {
     }
 
     @Override
-    protected <T extends JsStatement> void doAcceptStatementList(List<T> statements) {
-        ListContext<T> context = new ListContext<T>();
+    protected void doAcceptStatementList(List<JsStatement> statements) {
+        ListContext<JsStatement> context = new ListContext<JsStatement>();
         statementContexts.push(context);
         context.traverse(statements);
         statementContexts.pop();
@@ -198,7 +175,7 @@ public class JsVisitorWithContextImpl extends JsVisitorWithContext {
     }
 
     @NotNull
-    protected JsContext getLastStatementLevelContext() {
+    protected JsContext<JsStatement> getLastStatementLevelContext() {
         return statementContexts.peek();
     }
 

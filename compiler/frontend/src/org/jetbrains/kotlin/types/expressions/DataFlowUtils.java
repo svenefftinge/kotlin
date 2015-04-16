@@ -199,7 +199,7 @@ public class DataFlowUtils {
 
         for (JetType possibleType : c.dataFlowInfo.getPossibleTypes(dataFlowValue)) {
             if (JetTypeChecker.DEFAULT.isSubtypeOf(possibleType, c.expectedType)) {
-                SmartCastUtils.recordCastOrError(expression, possibleType, c.trace, dataFlowValue.isStableIdentifier(), false);
+                SmartCastUtils.recordCastOrError(expression, possibleType, c.trace, dataFlowValue.isPredictable(), false);
                 return possibleType;
             }
         }
@@ -261,7 +261,7 @@ public class DataFlowUtils {
     ) {
         DataFlowValue dataFlowValue = DataFlowValueFactory.createDataFlowValue(expression, type, c);
         Collection<JetType> possibleTypes = Sets.newHashSet(type);
-        if (dataFlowValue.isStableIdentifier()) {
+        if (dataFlowValue.isPredictable()) {
             possibleTypes.addAll(dataFlowInfo.getPossibleTypes(dataFlowValue));
         }
         return possibleTypes;

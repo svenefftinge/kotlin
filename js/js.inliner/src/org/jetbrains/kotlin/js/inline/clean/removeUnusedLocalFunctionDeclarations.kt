@@ -45,16 +45,12 @@ private class UnusedInstanceCollector : JsVisitorWithContextImpl() {
     public val removableDeclarations: List<JsStatement>
         get() = tracker.removable
 
-    override fun visit(x: JsVars.JsVar?, ctx: JsContext?): Boolean {
-        if (x == null) return false
-
+    override fun visit(x: JsVars.JsVar, ctx: JsContext<*>): Boolean {
         if (!isLocalFunctionDeclaration(x)) return super.visit(x, ctx)
 
         val name = x.getName()!!
         val statementContext = getLastStatementLevelContext()
-        val currentNode = statementContext.getCurrentNode()
-        assert(currentNode is JsStatement) { "expected context containing statement" }
-        val currentStatement = currentNode as JsStatement
+        val currentStatement = statementContext.getCurrentNode()
         tracker.addCandidateForRemoval(name, currentStatement)
 
         val references = collectReferencesInside(x)
@@ -64,7 +60,7 @@ private class UnusedInstanceCollector : JsVisitorWithContextImpl() {
         return false
     }
 
-    override fun visit(x: JsNameRef?, ctx: JsContext?): Boolean {
+    override fun visit(x: JsNameRef?, ctx: JsContext<*>?): Boolean {
         val name = x?.getName()
 
         if (name != null) {

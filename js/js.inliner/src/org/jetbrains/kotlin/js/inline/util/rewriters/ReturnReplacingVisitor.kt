@@ -33,26 +33,25 @@ class ReturnReplacingVisitor(private val resultRef: JsNameRef?, private val brea
     /**
      * Prevents replacing returns in object literal
      */
-    override fun visit(x: JsObjectLiteral?, ctx: JsContext?): Boolean = false
+    override fun visit(x: JsObjectLiteral, ctx: JsContext<*>): Boolean = false
 
     /**
      * Prevents replacing returns in inner function
      */
-    override fun visit(x: JsFunction?, ctx: JsContext?): Boolean = false
+    override fun visit(x: JsFunction, ctx: JsContext<*>): Boolean = false
 
-    override fun endVisit(x: JsReturn?, ctx: JsContext?) {
-        if (x == null || ctx == null) return
-
-        if (breakLabel != null) {
-            ctx.insertAfter(JsBreak(breakLabel))
-        }
+    override fun endVisit(x: JsReturn, ctx: JsContext<*>) {
+        ctx.removeMe()
 
         val returnReplacement = getReturnReplacement(x.getExpression())
         if (returnReplacement != null) {
-            ctx.insertBefore(JsExpressionStatement(returnReplacement))
+            ctx.addNext(JsExpressionStatement(returnReplacement))
         }
 
-        ctx.removeMe()
+        if (breakLabel != null) {
+            ctx.addNext(JsBreak(breakLabel))
+        }
+
     }
 
     private fun getReturnReplacement(returnExpression: JsExpression?): JsExpression? {
@@ -60,7 +59,7 @@ class ReturnReplacingVisitor(private val resultRef: JsNameRef?, private val brea
             if (resultRef != null)
                 return JsAstUtils.assignment(resultRef, returnExpression)
 
-            if (canHaveSideEffect(returnExpression))
+            if (returnExpression.canHaveSideEffect())
                 return returnExpression
         }
 

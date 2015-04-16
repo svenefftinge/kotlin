@@ -5,27 +5,35 @@
 package com.google.dart.compiler.backend.js.ast;
 
 import org.jetbrains.annotations.Nullable;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+
+import java.util.List;
 
 /**
  * The context in which a JsNode visitation occurs. This represents the set of
  * possible operations a JsVisitor subclass can perform on the currently visited
  * node.
  */
-public interface JsContext {
-  boolean canInsert();
+public abstract class JsContext<T extends JsNode> {
 
-  boolean canRemove();
+  public <R extends T> void addPrevious(R node) {
+    throw new NotImplementedException();
+  }
 
-  void insertAfter(JsNode node);
+  public <R extends T> void addPrevious(List<R> nodes) {
+    for (R node : nodes) {
+      addPrevious(node);
+    }
+  }
 
-  void insertBefore(JsNode node);
+  public <R extends T> void addNext(R node) {
+    throw new NotImplementedException();
+  }
 
-  boolean isLvalue();
+  public abstract void removeMe();
 
-  void removeMe();
-
-  void replaceMe(JsNode node);
+  public abstract <R extends T> void replaceMe(R node);
 
   @Nullable
-  JsNode getCurrentNode();
+  public abstract T getCurrentNode();
 }
