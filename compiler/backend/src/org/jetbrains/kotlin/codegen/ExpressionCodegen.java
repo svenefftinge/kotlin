@@ -66,6 +66,7 @@ import org.jetbrains.kotlin.resolve.constants.CompileTimeConstant;
 import org.jetbrains.kotlin.resolve.constants.IntegerValueTypeConstant;
 import org.jetbrains.kotlin.resolve.constants.evaluate.EvaluatePackage;
 import org.jetbrains.kotlin.resolve.descriptorUtil.DescriptorUtilPackage;
+import org.jetbrains.kotlin.resolve.inline.InlineUtil;
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm;
 import org.jetbrains.kotlin.resolve.jvm.jvmSignature.JvmMethodSignature;
 import org.jetbrains.kotlin.resolve.scopes.receivers.*;
@@ -2377,20 +2378,19 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
     protected CallGenerator getOrCreateCallGenerator(
             @NotNull CallableDescriptor descriptor,
             @Nullable JetElement callElement,
-            @Nullable ReifiedTypeParameterMappings reifierTypeParameterMappings
+            @Nullable ReifiedTypeParameterMappings reifiedTypeParameterMappings
     ) {
         if (callElement == null) return defaultCallGenerator;
 
         // We should inline callable containing reified type parameters even if inline is disabled
         // because they may contain something to reify and straight call will probably fail at runtime
         boolean isInline = (state.isInlineEnabled() || DescriptorUtils.containsReifiedTypeParameters(descriptor)) &&
-                           descriptor instanceof SimpleFunctionDescriptor &&
-                           ((SimpleFunctionDescriptor) descriptor).getInlineStrategy().isInline();
+                           InlineUtil.isInline(descriptor);
 
         if (!isInline) return defaultCallGenerator;
 
         SimpleFunctionDescriptor original = DescriptorUtils.unwrapFakeOverride((SimpleFunctionDescriptor) descriptor.getOriginal());
-        return new InlineCodegen(this, state, original, callElement, reifierTypeParameterMappings);
+        return new InlineCodegen(this, state, original, callElement, reifiedTypeParameterMappings);
     }
 
     @NotNull

@@ -22,8 +22,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.backend.common.CodegenUtil;
-import org.jetbrains.kotlin.builtins.InlineStrategy;
-import org.jetbrains.kotlin.builtins.InlineUtil;
+import org.jetbrains.kotlin.builtins.KotlinBuiltIns;
 import org.jetbrains.kotlin.codegen.*;
 import org.jetbrains.kotlin.codegen.context.CodegenContext;
 import org.jetbrains.kotlin.codegen.context.FieldOwnerContext;
@@ -39,6 +38,8 @@ import org.jetbrains.kotlin.renderer.DescriptorRenderer;
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils;
 import org.jetbrains.kotlin.resolve.DescriptorUtils;
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall;
+import org.jetbrains.kotlin.resolve.inline.InlineStrategy;
+import org.jetbrains.kotlin.resolve.inline.InlineUtil;
 import org.jetbrains.kotlin.resolve.jvm.AsmTypes;
 import org.jetbrains.kotlin.resolve.jvm.jvmSignature.JvmMethodParameterKind;
 import org.jetbrains.kotlin.resolve.jvm.jvmSignature.JvmMethodParameterSignature;
@@ -55,7 +56,10 @@ import org.jetbrains.org.objectweb.asm.tree.MethodNode;
 import org.jetbrains.org.objectweb.asm.tree.TryCatchBlockNode;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
 
 import static org.jetbrains.kotlin.codegen.AsmUtil.getMethodAsmFlags;
 import static org.jetbrains.kotlin.codegen.AsmUtil.isPrimitive;
@@ -94,7 +98,7 @@ public class InlineCodegen extends CallGenerator {
             @NotNull JetElement callElement,
             @Nullable ReifiedTypeParameterMappings typeParameterMappings
     ) {
-        assert functionDescriptor.getInlineStrategy().isInline() : "InlineCodegen could inline only inline function but " + functionDescriptor;
+        assert InlineUtil.isInline(functionDescriptor) : "InlineCodegen could inline only inline function: " + functionDescriptor;
 
         this.state = state;
         this.typeMapper = state.getTypeMapper();
@@ -109,8 +113,8 @@ public class InlineCodegen extends CallGenerator {
         context = (MethodContext) getContext(functionDescriptor, state);
         jvmSignature = typeMapper.mapSignature(functionDescriptor, context.getContextKind());
 
-        InlineStrategy inlineStrategy =
-                codegen.getContext().isInlineFunction() ? InlineStrategy.IN_PLACE : functionDescriptor.getInlineStrategy();
+        // TODO: implement AS_FUNCTION inline strategy
+        InlineStrategy inlineStrategy = InlineUtil.getInlineStrategy(functionDescriptor);
         this.asFunctionInline = false;
 
         isSameModule = JvmCodegenUtil.isCallInsideSameModuleAsDeclared(functionDescriptor, codegen.getContext(), state.getOutDirectory());
@@ -465,7 +469,7 @@ public class InlineCodegen extends CallGenerator {
         }
 
         //TODO: check type of context
-        return !(codegen.getContext().isInliningLambda() && descriptor != null && !InlineUtil.hasNoinlineAnnotation(descriptor));
+        return !(codegen.getContext().isInliningLambda() && descriptor != null && !KotlinBuiltIns.isNoinline(descriptor));
     }
 
     private void putParameterOnStack(ParameterInfo... infos) {

@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.DescriptorUtils
+import org.jetbrains.kotlin.resolve.inline.InlineUtil
 import java.util.ArrayList
 
 enum class ItemPriority {
@@ -252,8 +253,7 @@ fun returnExpressionItems(bindingContext: BindingContext, position: JetElement):
 
                 // check if the current function literal is inlined and stop processing outer declarations if it's not
                 val callee = call?.getCalleeExpression() as? JetReferenceExpression ?: break // not inlined
-                val target = bindingContext[BindingContext.REFERENCE_TARGET, callee] as? SimpleFunctionDescriptor ?: break // not inlined
-                if (!target.getInlineStrategy().isInline()) break // not inlined
+                if (!InlineUtil.isInline(bindingContext[BindingContext.REFERENCE_TARGET, callee])) break // not inlined
             }
             else {
                 if (parent.hasBlockBody()) {

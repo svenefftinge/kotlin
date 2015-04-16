@@ -20,9 +20,11 @@ import com.google.dart.compiler.backend.js.ast.*;
 import com.google.gwt.dev.js.ThrowExceptionOnErrorReporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.builtins.InlineUtil;
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns;
-import org.jetbrains.kotlin.descriptors.*;
+import org.jetbrains.kotlin.descriptors.CallableDescriptor;
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor;
+import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor;
+import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor;
 import org.jetbrains.kotlin.js.parser.ParserPackage;
 import org.jetbrains.kotlin.js.translate.callTranslator.CallTranslator;
 import org.jetbrains.kotlin.js.translate.context.TranslationContext;
@@ -35,16 +37,15 @@ import org.jetbrains.kotlin.resolve.TemporaryBindingTrace;
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall;
 import org.jetbrains.kotlin.resolve.constants.CompileTimeConstant;
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator;
+import org.jetbrains.kotlin.resolve.inline.InlineUtil;
 import org.jetbrains.kotlin.types.JetType;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
+import static org.jetbrains.kotlin.js.resolve.diagnostics.JsCallChecker.isJsCall;
 import static org.jetbrains.kotlin.js.translate.utils.PsiUtils.getFunctionDescriptor;
 import static org.jetbrains.kotlin.js.translate.utils.UtilsPackage.setInlineCallMetadata;
 import static org.jetbrains.kotlin.resolve.calls.callUtil.CallUtilPackage.getFunctionResolvedCallWithAssert;
-import static org.jetbrains.kotlin.js.resolve.diagnostics.JsCallChecker.isJsCall;
 
 public final class CallExpressionTranslator extends AbstractCallExpressionTranslator {
 
@@ -78,13 +79,11 @@ public final class CallExpressionTranslator extends AbstractCallExpressionTransl
 
     public static boolean shouldBeInlined(@NotNull CallableDescriptor descriptor) {
         if (descriptor instanceof SimpleFunctionDescriptor) {
-            return ((SimpleFunctionDescriptor) descriptor).getInlineStrategy().isInline();
+            return InlineUtil.isInline(descriptor);
         }
 
         if (descriptor instanceof ValueParameterDescriptor) {
-            DeclarationDescriptor containingDescriptor = descriptor.getContainingDeclaration();
-            return InlineUtil.getInlineType(containingDescriptor).isInline()
-                   && InlineUtil.isInlineLambdaParameter(descriptor);
+            return InlineUtil.isInline(descriptor.getContainingDeclaration()) && InlineUtil.isInlineLambdaParameter(descriptor);
         }
 
         return false;

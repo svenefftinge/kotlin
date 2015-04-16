@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.codegen.binding.MutableClosure;
 import org.jetbrains.kotlin.codegen.state.GenerationState;
 import org.jetbrains.kotlin.codegen.state.JetTypeMapper;
 import org.jetbrains.kotlin.descriptors.*;
+import org.jetbrains.kotlin.resolve.inline.InlineUtil;
 import org.jetbrains.org.objectweb.asm.Label;
 import org.jetbrains.org.objectweb.asm.Type;
 
@@ -112,11 +113,7 @@ public class MethodContext extends CodegenContext<CallableMemberDescriptor> {
     }
 
     public boolean isInlineFunction() {
-        DeclarationDescriptor descriptor = getContextDescriptor();
-        if (descriptor instanceof SimpleFunctionDescriptor) {
-            return ((SimpleFunctionDescriptor) descriptor).getInlineStrategy().isInline();
-        }
-        return false;
+        return InlineUtil.isInline(getContextDescriptor());
     }
 
     public boolean isInliningLambda() {

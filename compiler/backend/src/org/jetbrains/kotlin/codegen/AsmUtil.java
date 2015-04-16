@@ -40,7 +40,7 @@ import org.jetbrains.kotlin.load.java.descriptors.JavaCallableMemberDescriptor;
 import org.jetbrains.kotlin.name.FqName;
 import org.jetbrains.kotlin.resolve.DescriptorUtils;
 import org.jetbrains.kotlin.resolve.annotations.AnnotationsPackage;
-import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall;
+import org.jetbrains.kotlin.resolve.inline.InlineUtil;
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName;
 import org.jetbrains.kotlin.resolve.jvm.JvmPackage;
 import org.jetbrains.kotlin.resolve.jvm.JvmPrimitiveType;
@@ -260,20 +260,7 @@ public class AsmUtil {
     }
 
     public static int getVisibilityAccessFlagForAnonymous(@NotNull ClassDescriptor descriptor) {
-        if (isDeclarationInsideInlineFunction(descriptor)) {
-            return ACC_PUBLIC;
-        }
-        return NO_FLAG_PACKAGE_PRIVATE;
-    }
-
-    private static boolean isDeclarationInsideInlineFunction(@NotNull ClassDescriptor descriptor) {
-        //NB: constructor context couldn't be inline
-        DeclarationDescriptor parentDeclaration = descriptor.getContainingDeclaration();
-        if (parentDeclaration instanceof SimpleFunctionDescriptor &&
-            ((SimpleFunctionDescriptor) parentDeclaration).getInlineStrategy().isInline()) {
-            return true;
-        }
-        return false;
+        return InlineUtil.isInline(descriptor.getContainingDeclaration()) ? ACC_PUBLIC : NO_FLAG_PACKAGE_PRIVATE;
     }
 
     public static int calculateInnerClassAccessFlags(@NotNull ClassDescriptor innerClass) {
@@ -536,7 +523,7 @@ public class AsmUtil {
     }
 
     public static void genAreEqualCall(InstructionAdapter v) {
-        v.invokestatic(IntrinsicMethods.INTRINSICS_CLASS_NAME, "areEqual", "(Ljava/lang/Object;Ljava/lang/Object;)Z");
+        v.invokestatic(IntrinsicMethods.INTRINSICS_CLASS_NAME, "areEqual", "(Ljava/lang/Object;Ljava/lang/Object;)Z", false);
     }
 
     public static void genIncrement(Type expectedType, int myDelta, InstructionAdapter v) {

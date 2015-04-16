@@ -20,10 +20,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor;
 import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor;
 import org.jetbrains.kotlin.psi.JetNamedFunction;
-import org.jetbrains.kotlin.resolve.extension.InlineAnalyzerExtension;
+import org.jetbrains.kotlin.resolve.inline.InlineAnalyzerExtension;
+import org.jetbrains.kotlin.resolve.inline.InlineUtil;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -45,8 +46,7 @@ public class FunctionAnalyzerExtension {
             JetNamedFunction function = entry.getKey();
             SimpleFunctionDescriptor functionDescriptor = entry.getValue();
 
-            List<AnalyzerExtension> extensions = getExtensions(functionDescriptor);
-            for (AnalyzerExtension extension : extensions) {
+            for (AnalyzerExtension extension : getExtensions(functionDescriptor)) {
                 extension.process(functionDescriptor, function, trace);
             }
         }
@@ -54,12 +54,9 @@ public class FunctionAnalyzerExtension {
 
     @NotNull
     private static List<AnalyzerExtension> getExtensions(@NotNull FunctionDescriptor functionDescriptor) {
-        List<AnalyzerExtension> list = new ArrayList<AnalyzerExtension>();
-        if (functionDescriptor instanceof SimpleFunctionDescriptor &&
-                ((SimpleFunctionDescriptor) functionDescriptor).getInlineStrategy().isInline()) {
-            list.add(InlineAnalyzerExtension.INSTANCE);
+        if (InlineUtil.isInline(functionDescriptor)) {
+            return Collections.<AnalyzerExtension>singletonList(InlineAnalyzerExtension.INSTANCE);
         }
-        return list;
+        return Collections.emptyList();
     }
-
 }
