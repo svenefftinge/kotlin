@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.descriptors.PackageFragmentProvider
 import org.jetbrains.kotlin.descriptors.PackageFragmentProviderImpl
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.serialization.deserialization.ClassDescriptorFactory
 import org.jetbrains.kotlin.serialization.deserialization.DeserializationComponents
 import org.jetbrains.kotlin.serialization.deserialization.FlexibleTypeCapabilitiesDeserializer
 import org.jetbrains.kotlin.serialization.deserialization.LocalClassResolverImpl
@@ -31,6 +32,7 @@ public fun createBuiltInPackageFragmentProvider(
         module: ModuleDescriptor,
         packageFqNames: Set<FqName>,
         flexibleTypeCapabilitiesDeserializer: FlexibleTypeCapabilitiesDeserializer,
+        classFactory: ClassDescriptorFactory,
         loadResource: (String) -> InputStream?
 ): PackageFragmentProvider {
     val packageFragments = packageFqNames.map { fqName ->
@@ -47,7 +49,8 @@ public fun createBuiltInPackageFragmentProvider(
             BuiltInsAnnotationAndConstantLoader(module),
             provider,
             localClassResolver,
-            flexibleTypeCapabilitiesDeserializer
+            flexibleTypeCapabilitiesDeserializer,
+            classFactory
     )
 
     localClassResolver.setDeserializationComponents(components)

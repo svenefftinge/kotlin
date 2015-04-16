@@ -73,6 +73,13 @@ public class JavaToKotlinClassMap implements PlatformToKotlinClassMap {
             add(ClassId.topLevel(new FqName("kotlin.jvm.internal." + descriptor.getName().asString() + "CompanionObject")), companion);
         }
 
+        // TODO: support also functions with >= 23 parameters
+        for (int i = 0; i < 23; i++) {
+            add(ClassId.topLevel(new FqName("kotlin.jvm.functions.Function" + i)), builtIns.getFunction(i));
+        }
+
+        // TODO: also for each N map KFunctionN to kotlin.reflect.jvm.KFunctionImpl
+
         addJavaToKotlin(classId(Deprecated.class), builtIns.getDeprecatedAnnotation());
 
         addKotlinToJava(classId(Void.class), builtIns.getNothing());

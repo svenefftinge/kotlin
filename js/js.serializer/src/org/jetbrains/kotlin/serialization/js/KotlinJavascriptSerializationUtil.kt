@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.serialization.DescriptorSerializer
 import org.jetbrains.kotlin.serialization.ProtoBuf
 import org.jetbrains.kotlin.serialization.SerializationUtil
 import org.jetbrains.kotlin.serialization.builtins.BuiltInsSerializerExtension
+import org.jetbrains.kotlin.serialization.deserialization.ClassDescriptorFactory
 import org.jetbrains.kotlin.serialization.deserialization.FlexibleTypeCapabilitiesDeserializer
 import org.jetbrains.kotlin.storage.StorageManager
 import org.jetbrains.kotlin.utils.KotlinJavascriptMetadataUtils
@@ -59,7 +60,8 @@ public object KotlinJavascriptSerializationUtil {
         if (packageFqNames.isEmpty()) return null
 
         return createBuiltInPackageFragmentProvider(
-                storageManager, moduleDescriptor, packageFqNames, FlexibleTypeCapabilitiesDeserializer.Dynamic
+                storageManager, moduleDescriptor, packageFqNames, FlexibleTypeCapabilitiesDeserializer.Dynamic,
+                ClassDescriptorFactory.EMPTY
         ) {
             path ->
             if (!contentMap.containsKey(path)) null else ByteArrayInputStream(contentMap.get(path))
