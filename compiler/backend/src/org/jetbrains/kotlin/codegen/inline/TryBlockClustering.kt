@@ -26,25 +26,60 @@ enum class TryCatchPosition {
     INNER
 }
 
-trait IntervalWithHandler {
+public class SplittedPair<T: Interval>(val patchedPart: T, val newPart: T)
+
+class SimpleInterval(override val startLabel: LabelNode, override val endLabel: LabelNode ) : Interval
+
+trait Interval {
     val startLabel: LabelNode
     val endLabel: LabelNode
+
+    /*note that some intervals are mutable */
+    public fun isEmpty(): Boolean = startLabel == endLabel
+
+}
+
+trait SplittableInterval<T: Interval> : Interval {
+    fun split(splitBy: Interval, keepStart: Boolean): SplittedPair<T>
+}
+
+
+trait IntervalWithHandler : Interval {
     val handler: LabelNode
     val type: String?
 }
 
-class TryCatchBlockNodeInfo(val node: TryCatchBlockNode, val onlyCopyNotProcess: Boolean) : IntervalWithHandler {
+class TryCatchBlockNodeInfo(val node: TryCatchBlockNode, val onlyCopyNotProcess: Boolean) : IntervalWithHandler, SplittableInterval<TryCatchBlockNodeInfo> {
     override val startLabel: LabelNode
-            get() = node.start
+        get() = node.start
     override val endLabel: LabelNode
-            get() = node.end
+        get() = node.end
     override val handler: LabelNode
-            get() = node.handler
+        get() = node.handler
     override val type: String?
-            get() = node.type
+        get() = node.type
+
+    override fun split(splitBy: Interval, keepStart: Boolean): SplittedPair<TryCatchBlockNodeInfo> {
+        val newPartInterval = if (keepStart) {
+            val oldEnd = endLabel
+            node.end = splitBy.startLabel
+            Pair(splitBy.endLabel, oldEnd)
+        }
+        else {
+            val oldStart = startLabel
+            node.start = splitBy.endLabel
+            Pair(oldStart, splitBy.startLabel)
+        }
+        return SplittedPair(
+                this,
+                TryCatchBlockNodeInfo(TryCatchBlockNode(newPartInterval.first, newPartInterval.second, handler, type), onlyCopyNotProcess)
+        )
+    }
 }
 
-class TryCatchBlockNodePosition(val nodeInfo: TryCatchBlockNodeInfo, var position: TryCatchPosition): IntervalWithHandler by nodeInfo
+class TryCatchBlockNodePosition(val nodeInfo: TryCatchBlockNodeInfo, var position: TryCatchPosition) : IntervalWithHandler by nodeInfo {
+
+}
 
 class TryBlockCluster<T : IntervalWithHandler>(val blocks: MutableList<T>) {
     val defaultHandler: T?
@@ -52,13 +87,13 @@ class TryBlockCluster<T : IntervalWithHandler>(val blocks: MutableList<T>) {
 }
 
 
-fun <T: IntervalWithHandler> doClustering(blocks: List<T>) : List<TryBlockCluster<T>> {
+fun <T : IntervalWithHandler> doClustering(blocks: List<T>): List<TryBlockCluster<T>> {
     [data] class TryBlockInterval(val startLabel: LabelNode, val endLabel: LabelNode)
 
     val clusters = linkedMapOf<TryBlockInterval, TryBlockCluster<T>>()
     blocks.forEach { block ->
         val interval = TryBlockInterval(firstLabelInChain(block.startLabel), firstLabelInChain(block.endLabel))
-        val cluster = clusters.getOrPut(interval, {TryBlockCluster(arrayListOf())})
+        val cluster = clusters.getOrPut(interval, { TryBlockCluster(arrayListOf()) })
         cluster.blocks.add(block)
     }
 
