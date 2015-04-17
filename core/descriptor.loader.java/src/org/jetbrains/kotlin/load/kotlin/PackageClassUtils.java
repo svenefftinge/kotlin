@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.name.Name;
 
 public final class PackageClassUtils {
     public static final String PACKAGE_CLASS_NAME_SUFFIX = "Package";
-    private static final String DEFAULT_PACKAGE_CLASS_NAME = "_Default" + PACKAGE_CLASS_NAME_SUFFIX;
+    public static final String DEFAULT_PACKAGE_CLASS_NAME = "_Default" + PACKAGE_CLASS_NAME_SUFFIX;
 
     private PackageClassUtils() {
     }
