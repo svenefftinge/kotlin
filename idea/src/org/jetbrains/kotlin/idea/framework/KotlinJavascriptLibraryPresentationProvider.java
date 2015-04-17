@@ -27,14 +27,14 @@ import org.jetbrains.kotlin.idea.JetIcons;
 import javax.swing.*;
 import java.util.List;
 
-public class JsHeaderLibraryPresentationProvider extends LibraryPresentationProvider<LibraryVersionProperties> {
+public class KotlinJavascriptLibraryPresentationProvider extends LibraryPresentationProvider<LibraryVersionProperties> {
     public static final LibraryKind KOTLIN_JAVASCRIPT_HEADER_KIND = LibraryKind.create("kotlin-js-header");
 
-    public static JsHeaderLibraryPresentationProvider getInstance() {
-        return LibraryPresentationProvider.EP_NAME.findExtension(JsHeaderLibraryPresentationProvider.class);
+    public static KotlinJavascriptLibraryPresentationProvider getInstance() {
+        return LibraryPresentationProvider.EP_NAME.findExtension(KotlinJavascriptLibraryPresentationProvider.class);
     }
 
-    protected JsHeaderLibraryPresentationProvider() {
+    protected KotlinJavascriptLibraryPresentationProvider() {
         super(KOTLIN_JAVASCRIPT_HEADER_KIND);
     }
 
@@ -47,6 +47,6 @@ public class JsHeaderLibraryPresentationProvider extends LibraryPresentationProv
     @Nullable
     @Override
     public LibraryVersionProperties detect(@NotNull List<VirtualFile> classesRoots) {
-        return JsHeaderLibraryDetectionUtil.isJsHeaderLibraryDetected(classesRoots) ? new LibraryVersionProperties(null) : null;
+        return KotlinJavascriptLibraryDetectionUtil.isKotlinJavascriptLibrary(classesRoots) ? new LibraryVersionProperties(null) : null;
     }
 }
