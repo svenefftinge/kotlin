@@ -29,5 +29,5 @@ fun testY() {
 
     yy.name : String
     yy.get() : String
-    yy.<!UNRESOLVED_REFERENCE_WRONG_RECEIVER!>set<!>("yy")
+    yy.<!UNRESOLVED_REFERENCE!>set<!>("yy")
 }

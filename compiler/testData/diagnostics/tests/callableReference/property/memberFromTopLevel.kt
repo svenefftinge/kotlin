@@ -12,7 +12,7 @@ fun test() {
     <!TYPE_MISMATCH!>p<!> : KMutableMemberProperty<A, Int>
     p.get(A()) : Int
     p.get(<!NO_VALUE_FOR_PARAMETER!>)<!>
-    p.<!UNRESOLVED_REFERENCE_WRONG_RECEIVER!>set<!>(A(), 239)
+    p.<!UNRESOLVED_REFERENCE!>set<!>(A(), 239)
 
     val q = A::bar
 

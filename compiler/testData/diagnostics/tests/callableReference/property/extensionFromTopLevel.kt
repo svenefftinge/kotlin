@@ -14,7 +14,7 @@ fun test() {
     f : KExtensionProperty<String, Int>
     <!TYPE_MISMATCH!>f<!> : KMutableExtensionProperty<String, Int>
     f.get("abc") : Int
-    f.<!UNRESOLVED_REFERENCE_WRONG_RECEIVER!>set<!>("abc", 0)
+    f.<!UNRESOLVED_REFERENCE!>set<!>("abc", 0)
 
     val g = Int::meaning
 
