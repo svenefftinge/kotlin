@@ -409,12 +409,6 @@ public class JetDiagnosticsTestGenerated extends AbstractJetDiagnosticsTest {
             doTest(fileName);
         }
 
-        @TestMetadata("ReflectionTypesNotLoaded.kt")
-        public void testReflectionTypesNotLoaded() throws Exception {
-            String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/ReflectionTypesNotLoaded.kt");
-            doTest(fileName);
-        }
-
         @TestMetadata("ResolveOfJavaGenerics.kt")
         public void testResolveOfJavaGenerics() throws Exception {
             String fileName = JetTestUtils.navigationMetadata("compiler/testData/diagnostics/tests/ResolveOfJavaGenerics.kt");
