@@ -25,11 +25,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns;
 import org.jetbrains.kotlin.descriptors.PackageFragmentProvider;
-import org.jetbrains.kotlin.descriptors.impl.CompositePackageFragmentProvider;
 import org.jetbrains.kotlin.descriptors.impl.ModuleDescriptorImpl;
 import org.jetbrains.kotlin.js.analyze.TopDownAnalyzerFacadeForJS;
 import org.jetbrains.kotlin.psi.JetFile;
 import org.jetbrains.kotlin.serialization.js.KotlinJavascriptSerializationUtil;
+import org.jetbrains.kotlin.storage.LockBasedStorageManager;
 import org.jetbrains.kotlin.utils.KotlinJavascriptMetadata;
 
 import java.util.Collection;
@@ -107,7 +107,7 @@ public abstract class Config {
         return moduleId;
     }
 
-    public abstract  boolean checkLibFilesAndReportErrors(@NotNull Function1<String, Unit> report);
+    public abstract boolean checkLibFilesAndReportErrors(@NotNull Function1<String, Unit> report);
 
     protected abstract void init(@NotNull List<JetFile> sourceFilesInLibraries, @NotNull List<KotlinJavascriptMetadata> metadata);
 
@@ -117,10 +117,10 @@ public abstract class Config {
         if (moduleDescriptors != null) return moduleDescriptors;
 
         moduleDescriptors = new SmartList<ModuleDescriptorImpl>();
-        for(KotlinJavascriptMetadata metadataEntry : metadata) {
+        for (KotlinJavascriptMetadata metadataEntry : metadata) {
             moduleDescriptors.add(createModuleDescriptor(metadataEntry));
         }
-        for(ModuleDescriptorImpl module : moduleDescriptors) {
+        for (ModuleDescriptorImpl module : moduleDescriptors) {
             setDependencies(module, moduleDescriptors);
             module.seal();
         }
@@ -149,18 +149,17 @@ public abstract class Config {
     private static ModuleDescriptorImpl createModuleDescriptor(KotlinJavascriptMetadata metadata) {
         ModuleDescriptorImpl moduleDescriptor = TopDownAnalyzerFacadeForJS.createJsModule("<" + metadata.getModuleName() + ">");
 
-        List<PackageFragmentProvider> providers = KotlinJavascriptSerializationUtil
-                .getPackageFragmentProviders(moduleDescriptor, metadata.getBody());
-        CompositePackageFragmentProvider compositePackageFragmentProvider = new CompositePackageFragmentProvider(providers);
+        PackageFragmentProvider provider =
+                KotlinJavascriptSerializationUtil.createPackageFragmentProvider(moduleDescriptor, metadata.getBody(), new LockBasedStorageManager());
 
-        moduleDescriptor.initialize(compositePackageFragmentProvider);
+        moduleDescriptor.initialize(provider != null ? provider : PackageFragmentProvider.Empty.INSTANCE$);
         moduleDescriptor.addDependencyOnModule(KotlinBuiltIns.getInstance().getBuiltInsModule());
 
         return moduleDescriptor;
     }
 
     private static void setDependencies(ModuleDescriptorImpl module, List<ModuleDescriptorImpl> modules) {
-        for(ModuleDescriptorImpl moduleItem : modules) {
+        for (ModuleDescriptorImpl moduleItem : modules) {
             module.addDependencyOnModule(moduleItem);
         }
     }
