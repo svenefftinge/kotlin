@@ -17,24 +17,22 @@
 package org.jetbrains.kotlin.idea.editor.quickDoc
 
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.JetFileType
 import org.jetbrains.kotlin.idea.KotlinQuickDocumentationProvider
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
 import org.jetbrains.kotlin.psi.JetClass
-import org.jetbrains.kotlin.psi.JetFunction
-import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.junit.Assert
 
-public class QuickDocNavigationTest() : LightPlatformCodeInsightFixtureTestCase() {
+public class QuickDocInCompletionTest(): LightPlatformCodeInsightFixtureTestCase() {
     override fun getTestDataPath(): String {
-        return PluginTestCaseBase.getTestDataPathBase() + "/kdoc/navigate/"
+        return PluginTestCaseBase.getTestDataPathBase() + "/kdoc/inCompletion/"
     }
-
     public fun testSimple() {
         myFixture.configureByFile(getTestName(true) + ".kt")
-        val source = myFixture.getElementAtCaret().getParentOfType<JetFunction>(false)
-        val target = KotlinQuickDocumentationProvider().getDocumentationElementForLink(
-                myFixture.getPsiManager(), "C", source);
-        Assert.assertTrue(target is JetClass)
-        Assert.assertEquals("C", (target as JetClass).getName())
+        val lookupElements = myFixture.completeBasic()
+        val lookupObject = lookupElements.first().getObject()
+        val element = KotlinQuickDocumentationProvider().getDocumentationElementForLookupItem(
+                myFixture.getPsiManager(), lookupObject, null)
+        Assert.assertTrue(element is JetClass)
     }
 }
