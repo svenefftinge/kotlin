@@ -515,7 +515,8 @@ class CodegenAnnotatingVisitor extends JetVisitorVoid {
 
         int fieldNumber = mappings.size();
 
-        JetType type = bindingContext.get(BindingContext.EXPRESSION_TYPE, expression.getSubjectExpression());
+        assert expression.getSubjectExpression() != null : "subject expression should be not null in a valid when by enums";
+        JetType type = bindingContext.getType(expression.getSubjectExpression());
         assert type != null : "should not be null in a valid when by enums";
         ClassDescriptor classDescriptor = (ClassDescriptor) type.getConstructor().getDeclarationDescriptor();
         assert classDescriptor != null : "because it's enum";

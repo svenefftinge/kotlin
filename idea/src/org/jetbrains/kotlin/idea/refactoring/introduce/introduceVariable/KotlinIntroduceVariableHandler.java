@@ -77,7 +77,7 @@ public class KotlinIntroduceVariableHandler extends KotlinIntroduceHandlerBase {
     private static final String INTRODUCE_VARIABLE = JetRefactoringBundle.message("introduce.variable");
 
     @Override
-    public void invoke(@NotNull final Project project, final Editor editor, PsiFile file, DataContext dataContext) {
+    public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file, DataContext dataContext) {
         JetRefactoringUtil.SelectExpressionCallback callback = new JetRefactoringUtil.SelectExpressionCallback() {
             @Override
             public void run(@Nullable JetExpression expression) {
@@ -127,7 +127,7 @@ public class KotlinIntroduceVariableHandler extends KotlinIntroduceHandlerBase {
 
         AnalysisResult analysisResult = ResolvePackage.analyzeAndGetResult(expression);
         final BindingContext bindingContext = analysisResult.getBindingContext();
-        final JetType expressionType = bindingContext.get(BindingContext.EXPRESSION_TYPE, expression); //can be null or error type
+        final JetType expressionType = bindingContext.getType(expression); //can be null or error type
         JetScope scope = bindingContext.get(BindingContext.RESOLUTION_SCOPE, expression);
         if (scope != null) {
             DataFlowInfo dataFlowInfo = BindingContextUtilPackage.getDataFlowInfo(bindingContext, expression);

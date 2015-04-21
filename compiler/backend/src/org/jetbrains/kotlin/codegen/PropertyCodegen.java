@@ -283,7 +283,8 @@ public class PropertyCodegen {
     }
 
     private void generatePropertyDelegateAccess(JetProperty p, PropertyDescriptor propertyDescriptor) {
-        JetType delegateType = bindingContext.get(BindingContext.EXPRESSION_TYPE, p.getDelegateExpression());
+        assert p.getDelegateExpression() != null: "Property must have a delegate expression here";
+        JetType delegateType = bindingContext.getType(p.getDelegateExpression());
         if (delegateType == null) {
             // If delegate expression is unresolved reference
             delegateType = ErrorUtils.createErrorType("Delegate type");

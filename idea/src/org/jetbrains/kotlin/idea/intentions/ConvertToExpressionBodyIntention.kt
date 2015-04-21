@@ -94,7 +94,7 @@ public class ConvertToExpressionBodyIntention : JetSelfTargetingOffsetIndependen
 
         val declaredType = (descriptor as? CallableDescriptor)?.getReturnType() ?: return false
         val scope = scopeExpression.analyze()[BindingContext.RESOLUTION_SCOPE, scopeExpression] ?: return false
-        val expressionType = expression.analyzeInContext(scope)[BindingContext.EXPRESSION_TYPE, expression] ?: return false
+        val expressionType = expression.analyzeInContext(scope).getType(expression) ?: return false
         return expressionType.isSubtypeOf(declaredType)
     }
 
@@ -130,8 +130,8 @@ public class ConvertToExpressionBodyIntention : JetSelfTargetingOffsetIndependen
 
         var child = element.getFirstChild()
         while (child != null) {
-            if (containsReturn(child!!)) return true
-            child = child!!.getNextSibling()
+            if (containsReturn(child)) return true
+            child = child.getNextSibling()
         }
 
         return false

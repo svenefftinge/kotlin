@@ -118,22 +118,22 @@ public class JetFunctionParameterInfoHandler implements ParameterInfoHandlerWith
     }
 
     @Override
-    public JetValueArgumentList findElementForParameterInfo(CreateParameterInfoContext context) {
+    public JetValueArgumentList findElementForParameterInfo(@NotNull CreateParameterInfoContext context) {
         return findCall(context);
     }
 
     @Override
-    public void showParameterInfo(@NotNull JetValueArgumentList element, CreateParameterInfoContext context) {
+    public void showParameterInfo(@NotNull JetValueArgumentList element, @NotNull CreateParameterInfoContext context) {
         context.showHint(element, element.getTextRange().getStartOffset(), this);
     }
 
     @Override
-    public JetValueArgumentList findElementForUpdatingParameterInfo(UpdateParameterInfoContext context) {
+    public JetValueArgumentList findElementForUpdatingParameterInfo(@NotNull UpdateParameterInfoContext context) {
         return findCallAndUpdateContext(context);
     }
 
     @Override
-    public void updateParameterInfo(@NotNull JetValueArgumentList argumentList, UpdateParameterInfoContext context) {
+    public void updateParameterInfo(@NotNull JetValueArgumentList argumentList, @NotNull UpdateParameterInfoContext context) {
         if (context.getParameterOwner() != argumentList) context.removeHint();
         int offset = context.getOffset();
         ASTNode child = argumentList.getNode().getFirstChildNode();
@@ -201,7 +201,7 @@ public class JetFunctionParameterInfoHandler implements ParameterInfoHandlerWith
     }
 
     @Override
-    public void updateUI(Pair<? extends FunctionDescriptor, ResolutionFacade> itemToShow, ParameterInfoUIContext context) {
+    public void updateUI(Pair<? extends FunctionDescriptor, ResolutionFacade> itemToShow, @NotNull ParameterInfoUIContext context) {
         //todo: when we will have ability to pass Array as vararg, implement such feature here too?
         if (context == null || context.getParameterOwner() == null || !context.getParameterOwner().isValid()) {
             context.setUIComponentEnabled(false);
@@ -330,7 +330,7 @@ public class JetFunctionParameterInfoHandler implements ParameterInfoHandlerWith
     private static boolean isArgumentTypeValid(BindingContext bindingContext, JetValueArgument argument, ValueParameterDescriptor param) {
         if (argument.getArgumentExpression() != null) {
             JetType paramType = getActualParameterType(param);
-            JetType exprType = bindingContext.get(BindingContext.EXPRESSION_TYPE, argument.getArgumentExpression());
+            JetType exprType = bindingContext.getType(argument.getArgumentExpression());
             return exprType == null || JetTypeChecker.DEFAULT.isSubtypeOf(exprType, paramType);
         }
 
@@ -373,7 +373,7 @@ public class JetFunctionParameterInfoHandler implements ParameterInfoHandlerWith
             return null;
         }
 
-        final JetSimpleNameExpression callNameExpression = getCallSimpleNameExpression(argumentList);
+        JetSimpleNameExpression callNameExpression = getCallSimpleNameExpression(argumentList);
         if (callNameExpression == null) {
             return null;
         }

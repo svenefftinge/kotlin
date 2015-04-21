@@ -135,7 +135,7 @@ public class CheckPartialBodyResolveAction : AnAction() {
                     builder.append(" resolves to ${target?.presentation()}")
                 }
 
-                val type = bindingContext[BindingContext.EXPRESSION_TYPE, expression]
+                val type = bindingContext.getType(expression)
                 if (type != null) {
                     builder.append(" has type ${type.presentation()}")
                 }
@@ -158,16 +158,16 @@ public class CheckPartialBodyResolveAction : AnAction() {
         e.getPresentation().setEnabled(selectedKotlinFiles(e).any())
     }
 
-    private fun selectedKotlinFiles(e: AnActionEvent): Stream<JetFile> {
-        val virtualFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: return streamOf()
-        val project = CommonDataKeys.PROJECT.getData(e.getDataContext()) ?: return streamOf()
+    private fun selectedKotlinFiles(e: AnActionEvent): Sequence<JetFile> {
+        val virtualFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: return sequenceOf()
+        val project = CommonDataKeys.PROJECT.getData(e.getDataContext()) ?: return sequenceOf()
         return allKotlinFiles(virtualFiles, project)
     }
 
-    private fun allKotlinFiles(filesOrDirs: Array<VirtualFile>, project: Project): Stream<JetFile> {
+    private fun allKotlinFiles(filesOrDirs: Array<VirtualFile>, project: Project): Sequence<JetFile> {
         val manager = PsiManager.getInstance(project)
         return allFiles(filesOrDirs)
-                .stream()
+                .sequence()
                 .map { manager.findFile(it) as? JetFile }
                 .filterNotNull()
     }

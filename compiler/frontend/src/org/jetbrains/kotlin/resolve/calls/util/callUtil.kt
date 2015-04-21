@@ -69,7 +69,7 @@ public fun <C: ResolutionContext<C>> Call.hasUnresolvedArguments(context: Resolu
     val arguments = getValueArguments().map { it?.getArgumentExpression() }
     return arguments.any {
         argument ->
-        val expressionType = context.trace.getBindingContext()[BindingContext.EXPRESSION_TYPE, argument]
+        val expressionType = argument?.let { context.trace.getBindingContext().getType(it) }
         argument != null && !ArgumentTypeResolver.isFunctionLiteralArgument(argument, context)
                 && (expressionType == null || expressionType.isError())
     }
@@ -94,7 +94,7 @@ public fun Call.getValueArgumentForExpression(expression: JetExpression): ValueA
             else -> null
         }
     }
-    fun JetElement.isParenthesizedExpression() = stream(this) { it.deparenthesizeStructurally() }.any { it == expression }
+    fun JetElement.isParenthesizedExpression() = sequence(this) { it.deparenthesizeStructurally() }.any { it == expression }
     return getValueArguments().firstOrNull { it?.getArgumentExpression()?.isParenthesizedExpression() ?: false }
 }
 

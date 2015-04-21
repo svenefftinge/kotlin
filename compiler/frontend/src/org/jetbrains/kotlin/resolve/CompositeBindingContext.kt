@@ -22,11 +22,16 @@ import com.google.common.collect.ImmutableMap
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import com.intellij.psi.PsiElement
 import com.intellij.openapi.util.ModificationTracker
+import org.jetbrains.kotlin.psi.JetExpression
 import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
+import org.jetbrains.kotlin.types.JetType
 
 public class CompositeBindingContext private (
         private val delegates: List<BindingContext>
 ) : BindingContext {
+    override fun getType(expression: JetExpression): JetType? {
+        return delegates.sequence().map { it.getType(expression) }.firstOrNull { it != null }
+    }
 
     companion object {
         public fun create(delegates: List<BindingContext>): BindingContext {
@@ -37,7 +42,7 @@ public class CompositeBindingContext private (
     }
 
     override fun <K, V> get(slice: ReadOnlySlice<K, V>?, key: K?): V? {
-        return delegates.stream().map { it[slice, key] }.firstOrNull { it != null }
+        return delegates.sequence().map { it[slice, key] }.firstOrNull { it != null }
     }
 
     override fun <K, V> getKeys(slice: WritableSlice<K, V>?): Collection<K> {
@@ -60,8 +65,8 @@ public class CompositeBindingContext private (
     ) : Diagnostics {
 
         override fun iterator(): Iterator<Diagnostic> {
-            val emptyStream = listOf<Diagnostic>().stream()
-            return delegates.fold(emptyStream, { r, t -> r + t.stream() }).iterator()
+            val emptyStream = listOf<Diagnostic>().sequence()
+            return delegates.fold(emptyStream, { r, t -> r + t.sequence() }).iterator()
         }
 
         override val modificationTracker = object : ModificationTracker {
