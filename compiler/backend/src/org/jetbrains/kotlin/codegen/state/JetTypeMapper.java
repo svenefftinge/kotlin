@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.descriptors.*;
 import org.jetbrains.kotlin.descriptors.annotations.Annotated;
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor;
 import org.jetbrains.kotlin.load.java.JvmAbi;
+import org.jetbrains.kotlin.load.java.descriptors.JavaClassDescriptor;
 import org.jetbrains.kotlin.load.kotlin.PackageClassUtils;
 import org.jetbrains.kotlin.load.kotlin.PackagePartClassUtils;
 import org.jetbrains.kotlin.load.kotlin.nativeDeclarations.NativeDeclarationsPackage;
@@ -558,10 +559,16 @@ public class JetTypeMapper {
             ownerForDefaultImpl = isInterface(ownerForDefault) ? mapTraitImpl(ownerForDefault) : ownerForDefaultParam;
 
             if (isInterface && superCall) {
-                invokeOpcode = INVOKESTATIC;
-                signature = mapSignature(functionDescriptor, OwnerKind.TRAIT_IMPL);
-                owner = mapTraitImpl(currentOwner);
-                thisClass = mapClass(currentOwner);
+                if (currentOwner instanceof JavaClassDescriptor) {
+                    owner = thisClass = mapClass(currentOwner);
+                    signature = mapSignature(functionDescriptor);
+                    invokeOpcode = INVOKESPECIAL;
+                } else {
+                    invokeOpcode = INVOKESTATIC;
+                    signature = mapSignature(functionDescriptor, OwnerKind.TRAIT_IMPL);
+                    owner = mapTraitImpl(currentOwner);
+                    thisClass = mapClass(currentOwner);
+                }
             }
             else {
                 if (isStaticDeclaration(functionDescriptor) ||
