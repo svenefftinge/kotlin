@@ -271,10 +271,6 @@ class ExpressionDecomposer private (
             if (callee != null && receiver != null && receiver in containsNodeWithSideEffect) {
                 val receiverTmp = receiver.extractToTemporary()
                 callee.qualifier = receiverTmp
-
-                qualifier = Namer.getFunctionCallRef(callee)
-                arguments.add(0, receiverTmp)
-                matchedIndices = arguments.indicesOfExtractable
             }
             else {
                 qualifier = qualifier.extractToTemporary()
