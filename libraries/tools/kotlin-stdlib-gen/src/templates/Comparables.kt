@@ -5,7 +5,7 @@ import templates.Family.*
 fun comparables(): List<GenericFunction> {
     val templates = arrayListOf<GenericFunction>()
 
-    templates add f("atLeast(minimumValue: SELF)") {
+    templates add f("coerceAtLeast(minimumValue: SELF)") {
         only(Primitives, Generic)
         only(*numericPrimitives)
         returns("SELF")
@@ -25,7 +25,7 @@ fun comparables(): List<GenericFunction> {
 
     }
 
-    templates add f("atMost(maximumValue: SELF)") {
+    templates add f("coerceAtMost(maximumValue: SELF)") {
         only(Primitives, Generic)
         only(*numericPrimitives)
         returns("SELF")
@@ -44,7 +44,7 @@ fun comparables(): List<GenericFunction> {
         }
     }
 
-    templates add f("coerce(range: TRange)") {
+    templates add f("coerceIn(range: TRange)") {
         only(Primitives, Generic)
         only(*numericPrimitives)
         returns("SELF")
@@ -64,7 +64,7 @@ fun comparables(): List<GenericFunction> {
         }
     }
 
-    templates add f("coerce(minimumValue: SELF?, maximumValue: SELF?)") {
+    templates add f("coerceIn(minimumValue: SELF?, maximumValue: SELF?)") {
         only(Primitives, Generic)
         only(*numericPrimitives)
         returns("SELF")
