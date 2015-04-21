@@ -3,7 +3,7 @@ fun main(args : Array<String>) {
 
     val a: Int? = 2
 
-    a?.let { list += it }
+    <!DEBUG_INFO_SMARTCAST!>a<!>.let { list += it }
 }
 
 fun <T : Any, R> T.let(f: (T) -> R): R = f(this)

@@ -2,11 +2,13 @@ open class Base {
     fun bar(x: Int): Int = x + 1
 }
 
+fun init(): Int? { return null }
+
 class Derived : Base() {
     fun baz(x: Int): Int = x + 1
 
     fun foo() {
-        val x: Int? = null
+        val x: Int? = init()
 
         super.bar(<!TYPE_MISMATCH!>x<!>)
         this.baz(<!TYPE_MISMATCH!>x<!>)
@@ -14,7 +16,7 @@ class Derived : Base() {
         super.bar(<!DEBUG_INFO_SMARTCAST!>x<!>)
         this.baz(<!DEBUG_INFO_SMARTCAST!>x<!>)
 
-        val y: Int? = null
+        val y: Int? = init()
         if (y != null) super.bar(this.baz(<!DEBUG_INFO_SMARTCAST!>y<!>))
         else this.baz(super.bar(<!TYPE_MISMATCH!>y<!>))
     }

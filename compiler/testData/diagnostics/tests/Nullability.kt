@@ -1,5 +1,11 @@
+fun init(): Int? { return 0 }
+
+fun initPrintStream(): java.io.PrintStream? { return null }
+
+fun initInputStream(): java.io.InputStream? { return null }
+
 fun test() {
-  val a : Int? = 0
+  val a : Int? = init()
   if (a != null) {
     <!DEBUG_INFO_SMARTCAST!>a<!>.plus(1)
   }
@@ -7,8 +13,8 @@ fun test() {
     a?.plus(1)
   }
 
-  val out : java.io.PrintStream? = null
-  val ins : java.io.InputStream? = null
+  val out : java.io.PrintStream? = initPrintStream()
+  val ins : java.io.InputStream? = initInputStream()
 
   out?.println()
   ins?.read()
@@ -142,7 +148,7 @@ fun test() {
   }
   out?.println();
 
-  val out2 : java.io.PrintStream? = null
+  val out2 : java.io.PrintStream? = initPrintStream()
   
   while (out2 == null) {
     out2?.println();

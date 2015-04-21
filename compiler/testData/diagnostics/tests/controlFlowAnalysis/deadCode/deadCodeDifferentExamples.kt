@@ -154,8 +154,10 @@ fun fail() : Nothing {
   throw java.lang.RuntimeException()
 }
 
+fun init(): Int? { return 1 }
+
 fun nullIsNotNothing() : Unit {
-    val x : Int? = 1
+    val x : Int? = init()
     if (x != null) {
          return
     }

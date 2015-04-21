@@ -2,6 +2,7 @@ package
 
 internal fun F(): kotlin.MutableMap<kotlin.String, kotlin.String>
 internal fun hashMapOf(/*0*/ pair: StringPair): kotlin.MutableMap<kotlin.String, kotlin.String>
+internal fun init(): kotlin.String?
 internal fun kotlin.String.to(/*0*/ second: kotlin.String): StringPair
 
 kotlin.data() internal final class StringPair {

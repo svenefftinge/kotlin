@@ -1,6 +1,7 @@
 package
 
 internal fun f(): kotlin.Unit
+internal fun init(): kotlin.Boolean?
 
 internal final class A {
     public constructor A()

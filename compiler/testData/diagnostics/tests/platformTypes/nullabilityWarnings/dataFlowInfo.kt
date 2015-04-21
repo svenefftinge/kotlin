@@ -15,6 +15,8 @@ public class J {
 
 import p.*
 
+fun init(): J? { return null }
+
 fun test() {
     val n = J.staticN
     foo(<!NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS!>n<!>)
@@ -24,7 +26,7 @@ fun test() {
         J.staticNN = n
     }
 
-    val x: J? = null
+    val x: J? = init()
     J.staticNN = <!NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS!>x<!>
     if (x != null) {
         J.staticNN = x

@@ -1,5 +1,7 @@
+fun init(): A { return C() } 
+
 fun main(args: Array<String>) {
-    val b: A = C()
+    val b: A = init()
     <caret>val a = 1
 }
 

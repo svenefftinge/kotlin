@@ -1,8 +1,10 @@
 //KT-2851 Type inference failed passing in not-null after smart-cast value in Pair
 package a
 
+fun init(): String? { return "" }
+
 fun main(args: Array<String>) {
-    val value: String? = ""
+    val value: String? = init()
     if (value != null) {
         foo(Pair("val", <!DEBUG_INFO_SMARTCAST!>value<!>))
         foo(Pair("val", value<!UNNECESSARY_NOT_NULL_ASSERTION!>!!<!>))

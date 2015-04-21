@@ -6,5 +6,5 @@ fun test(a: Any?) {
     <!DEBUG_INFO_SMARTCAST!>b<!>.hashCode()
 
     val c: Any? = a
-    c<!UNSAFE_CALL!>.<!>hashCode()
+    <!DEBUG_INFO_SMARTCAST!>c<!>.hashCode()
 }

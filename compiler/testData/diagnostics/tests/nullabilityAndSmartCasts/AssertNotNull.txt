@@ -1,3 +1,4 @@
 package
 
+internal fun init(): kotlin.Any?
 internal fun main(/*0*/ args: kotlin.Array<kotlin.String>): kotlin.Unit

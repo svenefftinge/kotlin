@@ -8,16 +8,17 @@ fun test() {
     val sample1: List<List<Int?>> = arrayList(arrayList<Int?>(1, 7, null, 8))
 
     //breaks compiler
-    val sample2 = sample1.map({it.map({it})})
+    // NB: here and below smart cast is unnecessary, see also KT-4294
+    val sample2 = <!DEBUG_INFO_SMARTCAST!>sample1<!>.map({it.map({it})})
     sample2 : List<List<Int?>>
 
     //breaks compiler
-    val sample3 = sample1.map({row -> row.map({column -> column})})
+    val sample3 = <!DEBUG_INFO_SMARTCAST!>sample1<!>.map({row -> row.map({column -> column})})
     sample3 : List<List<Int?>>
 
     //doesn't break compiler
     val identity: (Int?) -> Int? = {column -> column}
-    val sample4 = sample1.map({row -> row.map(identity)})
+    val sample4 = <!DEBUG_INFO_SMARTCAST!>sample1<!>.map({row -> row.map(identity)})
     sample4 : List<List<Int?>>
 }
 

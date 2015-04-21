@@ -1,5 +1,7 @@
 package
 
+internal fun init(): kotlin.Int?
+
 internal open class Base {
     public constructor Base()
     internal final fun bar(/*0*/ x: kotlin.Int): kotlin.Int

@@ -2,6 +2,8 @@ class A() {
   override fun equals(other : Any?) : Boolean = false
 }
 
+fun init(): Boolean? { return true }
+
 fun f(): Unit {
   var x: Int? = <!VARIABLE_WITH_REDUNDANT_INITIALIZER!>1<!>
   x = null
@@ -24,7 +26,7 @@ fun f(): Unit {
   x<!UNSAFE_INFIX_CALL!>..<!>2
   <!TYPE_MISMATCH!>x<!> in 1..2
 
-  val y : Boolean? = true
+  val y : Boolean? = init()
   <!UNUSED_EXPRESSION!>false || <!TYPE_MISMATCH!>y<!><!>
   <!UNUSED_EXPRESSION!><!TYPE_MISMATCH!>y<!> && true<!>
   <!UNUSED_EXPRESSION!><!TYPE_MISMATCH!>y<!> && <!CONSTANT_EXPECTED_TYPE_MISMATCH!>1<!><!>

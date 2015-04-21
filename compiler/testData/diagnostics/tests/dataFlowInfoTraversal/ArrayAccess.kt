@@ -3,8 +3,10 @@ public inline fun <reified T> Array(n: Int, block: (Int) -> T): Array<T> = null!
 
 fun bar(x: Int): Int = x + 1
 
+fun init(): Int? { return null }
+
 fun foo() {
-    val x: Int? = null
+    val x: Int? = init()
     val a = Array<Int>(3, {0})
 
     if (x != null) bar(a[<!DEBUG_INFO_SMARTCAST!>x<!>]) else bar(a[<!TYPE_MISMATCH!>x<!>])

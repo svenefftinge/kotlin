@@ -1,9 +1,9 @@
 package privateMember
-
+fun init(): Base { return Derived() }
 fun main(args: Array<String>) {
     val base = Base()
     val derived = Derived()
-    val derivedAsBase: Base = Derived()
+    val derivedAsBase: Base = init()
 
     //Breakpoint!
     args.size

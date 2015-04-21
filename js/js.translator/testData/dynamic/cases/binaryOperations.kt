@@ -1,9 +1,11 @@
 package foo
 
+fun init(arg: Any): dynamic { return arg }
+
 fun box(): String {
-    val a: dynamic = 12
+    val a: dynamic = init(12)
     var b: dynamic = 33.4
-    var c: dynamic = "text"
+    var c: dynamic = init("text")
     val d: dynamic = true
 
     assertEquals(60, a * 5)

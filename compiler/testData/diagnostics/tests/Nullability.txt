@@ -10,4 +10,7 @@ internal fun f6(/*0*/ s: kotlin.String?): kotlin.Unit
 internal fun f7(/*0*/ s: kotlin.String?, /*1*/ t: kotlin.String?): kotlin.Unit
 internal fun f8(/*0*/ b: kotlin.String?, /*1*/ a: kotlin.String): kotlin.Unit
 internal fun f9(/*0*/ a: kotlin.Int?): kotlin.Int
+internal fun init(): kotlin.Int?
+internal fun initInputStream(): java.io.InputStream?
+internal fun initPrintStream(): java.io.PrintStream?
 internal fun test(): kotlin.Unit
