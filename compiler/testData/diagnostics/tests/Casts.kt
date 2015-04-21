@@ -4,7 +4,7 @@ fun test() : Unit {
 
   x : Int?
   y : Int
-  x as Int : Int
+  <!DEBUG_INFO_SMARTCAST!>x<!> : Int
   y <!USELESS_CAST!>as Int<!> : Int
   x <!USELESS_CAST!>as Int?<!> : Int?
   y <!USELESS_CAST_STATIC_ASSERT_IS_FINE!>as Int?<!> : Int?

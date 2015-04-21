@@ -1,5 +1,6 @@
 package
 
+internal fun init(): Foo?
 internal fun test(): kotlin.Unit
 
 internal final class Foo {

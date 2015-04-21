@@ -34,10 +34,10 @@ fun test() {
 
     if (platformN !== null) {}
     if (platformN === null) {}
-    if (a === null && platformN === a) {}
+    if (<!SENSELESS_COMPARISON!>a === null<!> && platformN === a) {}
 
     if (platformJ !== null) {}
     if (platformJ === null) {}
-    if (a === null && platformJ === a) {}
+    if (<!SENSELESS_COMPARISON!>a === null<!> && platformJ === a) {}
 }
 

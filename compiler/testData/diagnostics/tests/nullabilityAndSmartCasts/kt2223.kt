@@ -3,6 +3,6 @@ package kt2223
 
 fun foo() {
     val x: Int? = null
-    if (x == null) return
+    if (<!SENSELESS_COMPARISON!>x == null<!>) return
     if (<!SENSELESS_COMPARISON!>x == null<!>) return
 }

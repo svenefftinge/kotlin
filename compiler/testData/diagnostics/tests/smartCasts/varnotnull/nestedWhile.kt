@@ -10,9 +10,11 @@ class Bar {
 fun foo(): Bar {
     var x: Bar? = Bar()
     var y: Bar? = Bar()
+    // NB: both x and y must be reset here
     while (x != null) {
-        // Here call is unsafe because of initialization and also inner loop
+        // Here call is unsafe because of the inner loop (BUG)
         y<!UNSAFE_CALL!>.<!>next()
+        // NB: y must be reset here
         while (y != null) {
             if (x == y)
                 // x is not null because of outer while

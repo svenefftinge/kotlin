@@ -9,6 +9,6 @@ fun foo() {
     if (<!SENSELESS_COMPARISON!>null == x<!>) {}
 
     val y : Int? = 1
-    if (y != null) {}
-    if (y == null) {}
+    if (<!SENSELESS_COMPARISON!>y != null<!>) {}
+    if (<!SENSELESS_COMPARISON!>y == null<!>) {}
 }

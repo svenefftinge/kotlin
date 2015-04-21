@@ -154,7 +154,7 @@ fun fail() : Nothing {
 
 fun nullIsNotNothing() : Unit {
     val x : Int? = 1
-    if (x != null) {
+    if (<warning>x != null</warning>) {
          return
     }
     fail()

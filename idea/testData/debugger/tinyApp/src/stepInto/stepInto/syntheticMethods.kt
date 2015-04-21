@@ -1,7 +1,7 @@
 package syntheticMethods
-
+fun init(): Base<String> { return Derived() }
 fun main(args: Array<String>) {
-    val d: Base<String> = Derived()
+    val d: Base<String> = init()
     //Breakpoint!
     d.foo("")
     A().test()

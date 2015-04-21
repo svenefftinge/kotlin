@@ -4,8 +4,10 @@ class A {
     fun bar(x: Int) = baz(x)
 }
 
+fun init(): Int? { return null }
+
 fun foo() {
-    val x: Int? = null
+    val x: Int? = init()
 
     A().bar(<!TYPE_MISMATCH!>x<!>)
     if (x == null) return

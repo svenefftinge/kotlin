@@ -2,10 +2,10 @@ class Foo()
 
 fun test() {
   val f : Foo? = null
-  if (f == null) {
+  if (<warning>f == null</warning>) {
 
   }
-  if (f != null) {
+  if (<warning>f != null</warning>) {
 
   }
 }

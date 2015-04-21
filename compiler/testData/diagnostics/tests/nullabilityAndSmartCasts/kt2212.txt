@@ -1,5 +1,6 @@
 package
 
 package kt2212 {
+    internal fun init(): kotlin.Int?
     internal fun main(/*0*/ args: kotlin.Array<kotlin.String>): kotlin.Unit
 }

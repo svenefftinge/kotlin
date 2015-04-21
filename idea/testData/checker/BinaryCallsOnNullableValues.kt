@@ -25,7 +25,7 @@ fun f(): Unit {
   x in 1..2
 
   val y : Boolean? = true
-  <warning>false || <error>y</error></warning>
-  <warning><error>y</error> && true</warning>
-  <warning><error>y</error> && <error>1</error></warning>
+  <warning>false || y</warning>
+  <warning>y && true</warning>
+  <warning>y && <error>1</error></warning>
 }

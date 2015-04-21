@@ -4,6 +4,7 @@ internal fun blockAndAndMismatch(): kotlin.Boolean
 internal fun fail(): kotlin.Nothing
 internal fun failtest(/*0*/ a: kotlin.Int): kotlin.Int
 internal fun foo(/*0*/ a: kotlin.Nothing): kotlin.Unit
+internal fun init(): kotlin.Int?
 internal fun nullIsNotNothing(): kotlin.Unit
 internal fun returnInWhile(/*0*/ a: kotlin.Int): kotlin.Unit
 internal fun t1(): kotlin.Int

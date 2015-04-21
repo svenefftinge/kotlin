@@ -32,14 +32,14 @@ fun test() {
     if (<!SENSELESS_COMPARISON!>platformNN == null<!>) {}
     if (<!SENSELESS_COMPARISON!>null == platformNN<!>) {}
 
-    if (a != null && platformNN != a) {}
+    if (<!SENSELESS_COMPARISON!>a != null<!> && platformNN != a) {}
 
     if (platformN != null) {}
     if (platformN == null) {}
-    if (a == null && platformN == a) {}
+    if (<!SENSELESS_COMPARISON!>a == null<!> && platformN == a) {}
 
     if (platformJ != null) {}
     if (platformJ == null) {}
-    if (a == null && platformJ == a) {}
+    if (<!SENSELESS_COMPARISON!>a == null<!> && platformN == a) {}
 }
 

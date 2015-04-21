@@ -11,10 +11,10 @@ fun foo(c: Consumer<Int>, p: Producer<Int>, u: Usual<Int>) {
     val <warning>c2</warning>: Consumer<Int> = c1
 
     val p1: Producer<Any> = p
-    val <warning>p2</warning>: Producer<Int> = <error>p1</error>
+    val <warning>p2</warning>: Producer<Int> = p1
 
     val u1: Usual<Any> = <error>u</error>
-    val <warning>u2</warning>: Usual<Int> = <error>u1</error>
+    val <warning>u2</warning>: Usual<Int> = u1
 }
 
 //Arrays copy example

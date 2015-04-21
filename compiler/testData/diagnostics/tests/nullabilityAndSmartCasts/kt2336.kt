@@ -1,5 +1,7 @@
+fun init(): Boolean? { return null }
+
 fun main(args: Array<String>) {
-    val b: Boolean? = null
+    val b: Boolean? = init()
     if (b != null) {
         if (!<!DEBUG_INFO_SMARTCAST!>b<!>) {} // OK
         if (<!DEBUG_INFO_SMARTCAST!>b<!>) {} // Error: Condition must be of type kotlin.Boolean, but is of type kotlin.Boolean?

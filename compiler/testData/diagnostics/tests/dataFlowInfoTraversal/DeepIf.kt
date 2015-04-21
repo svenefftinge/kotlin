@@ -1,8 +1,10 @@
 // !DIAGNOSTICS: -DEBUG_INFO_SMARTCAST
 fun bar(x: Int) = x + 1
 
+fun init(): Int? { return null }
+
 fun foo() {
-    val x: Int? = null
+    val x: Int? = init()
 
     if (x != null) {
         bar(x)

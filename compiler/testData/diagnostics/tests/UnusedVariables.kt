@@ -50,9 +50,11 @@ class MyTest() {
         i = <!UNUSED_VALUE!>456<!>;
     }
 
+    fun init(): Int? { return 34 }
+
     fun testWhile() {
         var a : Any? = true
-        var b : Any? = 34
+        var b : Any? = init()
         while (a is Any) {
             a = null
         }

@@ -1,3 +1,4 @@
 package
 
+internal fun init(): kotlin.String?
 internal fun set(/*0*/ key: kotlin.String, /*1*/ value: kotlin.String): kotlin.Unit

@@ -6,8 +6,10 @@
 
 fun String?.times(a: Int): Boolean = a == 0
 
+fun init(): Int? { return 4 }
+
 fun main(args: Array<String>) {
-    val foo: Int? = 4
+    val foo: Int? = init()
     if (foo * 10<caret>) {
         foo
     }

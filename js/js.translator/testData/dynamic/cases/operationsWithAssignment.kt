@@ -1,9 +1,11 @@
 package foo
 
+fun init(arg: Any): dynamic { return arg }
+
 fun box(): String {
-    var a: dynamic = 12
-    var b: dynamic = 33.4
-    var c: dynamic = "text"
+    var a: dynamic = init(12)
+    var b: dynamic = init(33.4)
+    var c: dynamic = init("text")
     val d: dynamic = true
 
     a += d

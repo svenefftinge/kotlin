@@ -1,3 +1,5 @@
+fun init(): Any? { return null }
+
 fun main(args : Array<String>) {
     val a : Int? = null
     val b : Int? = null
@@ -11,7 +13,7 @@ fun main(args : Array<String>) {
     val c = 1
     c<!UNNECESSARY_NOT_NULL_ASSERTION!>!!<!>
 
-    val d : Any? = null
+    val d : Any? = init()
 
     if (d != null) {
         d<!UNNECESSARY_NOT_NULL_ASSERTION!>!!<!>

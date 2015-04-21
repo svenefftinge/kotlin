@@ -1,5 +1,7 @@
+fun init(): Base { return Derived() }
+
 fun main(args: Array<String>) {
-    val b: Base = Derived()
+    val b: Base = init()
     <caret>val a = 1
 }
 

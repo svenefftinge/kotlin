@@ -3,8 +3,10 @@ package kt2164
 
 fun foo(x: Int): Int = x + 1
 
+fun init(): Int? { return null }
+
 fun main(args : Array<String>) {
-    val x: Int? = null
+    val x: Int? = init()
 
     foo(<!TYPE_MISMATCH!>x<!>)
 

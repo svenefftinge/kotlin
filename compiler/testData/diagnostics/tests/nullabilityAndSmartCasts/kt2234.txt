@@ -2,6 +2,7 @@ package
 
 package a {
     internal fun foo(): kotlin.Unit
+    internal fun init(): kotlin.Int?
     internal fun main(/*0*/ args: kotlin.Array<kotlin.String>): kotlin.Unit
 
     internal final class Pair</*0*/ A, /*1*/ B> {

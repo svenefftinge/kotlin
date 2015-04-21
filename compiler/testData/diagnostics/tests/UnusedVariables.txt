@@ -24,6 +24,7 @@ package unused_variables {
         internal final fun doSmth(/*0*/ s: kotlin.String): kotlin.Unit
         public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
         public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+        internal final fun init(): kotlin.Int?
         internal final fun testFor(): kotlin.Unit
         internal final fun testIf(): kotlin.Unit
         internal final fun testIncDec(): kotlin.Unit
