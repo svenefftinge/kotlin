@@ -21,20 +21,24 @@ fun generateCollectionsAPI(outDir: File) {
     specialJVM().writeTo(File(outDir, "_SpecialJVM.kt")) { build() }
     ranges().writeTo(File(outDir, "_Ranges.kt")) { build() }
 
-    numeric().writeTo(File(outDir, "_Numeric.kt")) {
+    toPrimitiveArrays().writeTo(File(outDir, "_ArraysToPrimitiveArrays.kt")) {
         val builder = StringBuilder()
-        // TODO: decide if sum for byte and short is needed and how to make it work
-        for (numeric in listOf(PrimitiveType.Int, PrimitiveType.Long, /*Byte, Short, */ PrimitiveType.Double, PrimitiveType.Float)) {
-            build(builder, Iterables, numeric)
-            build(builder, Sequences, numeric)
-        }
+        for (family in buildFamilies)
+            build(builder, family, buildPrimitives.single())
 
-        for (numeric in listOf(PrimitiveType.Int, PrimitiveType.Long, PrimitiveType.Byte, PrimitiveType.Short, PrimitiveType.Double, PrimitiveType.Float)) {
-            build(builder, ArraysOfObjects, numeric)
-            build(builder, ArraysOfPrimitives, numeric)
-        }
         builder.toString()
     }
+
+    numeric().writeTo(File(outDir, "_Numeric.kt")) {
+        val builder = StringBuilder()
+        for (numeric in numericPrimitives)
+            for (family in buildFamilies)
+                build(builder, family, numeric)
+
+        builder.toString()
+    }
+
+    comparables().writeTo(File(outDir, "_Comparables.kt")) { build() }
 
 }
 

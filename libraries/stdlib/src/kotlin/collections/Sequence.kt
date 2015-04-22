@@ -1,5 +1,6 @@
 package kotlin
 
+import java.util.Enumeration
 import java.util.NoSuchElementException
 
 deprecated("Use Sequence<T> instead.")
@@ -33,23 +34,46 @@ public fun <T> streamOf(progression: Progression<T>): Stream<T> = object : Strea
 /**
  * Creates a sequence that returns all values from this iterator. The sequence is constrained to be iterated only once.
  */
-public fun <T> Iterator<T>.sequence(): Sequence<T> {
+public fun <T> Iterator<T>.asSequence(): Sequence<T> {
     val iteratorSequence = object : Sequence<T> {
-        override fun iterator(): Iterator<T> = this@sequence
+        override fun iterator(): Iterator<T> = this@asSequence
     }
     return iteratorSequence.constrainOnce()
 }
 
+deprecated("Use asSequence() instead.")
+public fun <T> Iterator<T>.sequence(): Sequence<T> = asSequence()
+
+
+/**
+ * Creates a sequence that returns all values from this enumeration. The sequence is constrained to be iterated only once.
+ */
+public fun<T> Enumeration<T>.asSequence(): Sequence<T> = this.iterator().sequence()
+
 /**
  * Creates a sequence that returns the specified values.
  */
-public fun <T> sequenceOf(vararg elements: T): Sequence<T> = elements.sequence()
+public fun <T> sequenceOf(vararg elements: T): Sequence<T> = if (elements.isEmpty()) emptySequence() else elements.asSequence()
 
 /**
  * Creates a sequence that returns all values in the specified [progression].
  */
 public fun <T> sequenceOf(progression: Progression<T>): Sequence<T> = object : Sequence<T> {
     override fun iterator(): Iterator<T> = progression.iterator()
+}
+
+/**
+ * Returns an empty sequence.
+ */
+public fun <T> emptySequence(): Sequence<T> = EmptySequence
+
+private object EmptySequence : Sequence<Nothing> {
+    override fun iterator(): Iterator<Nothing> = EmptySequenceIterator
+}
+
+private object EmptySequenceIterator : Iterator<Nothing> {
+    override fun next(): Nothing = throw NoSuchElementException("Sequence is empty.")
+    override fun hasNext(): Boolean = false
 }
 
 deprecated("Use FilteringSequence<T> instead")
