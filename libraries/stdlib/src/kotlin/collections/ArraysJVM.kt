@@ -9,48 +9,49 @@ import kotlin.jvm.internal.Intrinsic
 /**
  * Returns an array containing the specified elements.
  */
-[Intrinsic("kotlin.arrays.array")] public fun <reified T> array(vararg t : T) : Array<T> = t as Array<T>
+[Intrinsic("kotlin.arrays.array")] public fun <reified T> arrayOf(vararg t : T) : Array<T> = t as Array<T>
 
 // "constructors" for primitive types array
 /**
  * Returns an array containing the specified [Double] numbers.
  */
-[Intrinsic("kotlin.arrays.array")] public fun doubleArray(vararg content : Double) : DoubleArray    = content
+[Intrinsic("kotlin.arrays.array")] public fun doubleArrayOf(vararg content : Double) : DoubleArray    = content
 
 /**
  * Returns an array containing the specified [Float] numbers.
  */
-[Intrinsic("kotlin.arrays.array")] public fun floatArray(vararg content : Float) : FloatArray       = content
+[Intrinsic("kotlin.arrays.array")] public fun floatArrayOf(vararg content : Float) : FloatArray       = content
 
 /**
  * Returns an array containing the specified [Long] numbers.
  */
-[Intrinsic("kotlin.arrays.array")] public fun longArray(vararg content : Long) : LongArray          = content
+[Intrinsic("kotlin.arrays.array")] public fun longArrayOf(vararg content : Long) : LongArray          = content
 
 /**
  * Returns an array containing the specified [Int] numbers.
  */
-[Intrinsic("kotlin.arrays.array")] public fun intArray(vararg content : Int) : IntArray             = content
+[Intrinsic("kotlin.arrays.array")] public fun intArrayOf(vararg content : Int) : IntArray             = content
 
 /**
  * Returns an array containing the specified characters.
  */
-[Intrinsic("kotlin.arrays.array")] public fun charArray(vararg content : Char) : CharArray          = content
+[Intrinsic("kotlin.arrays.array")] public fun charArrayOf(vararg content : Char) : CharArray          = content
 
 /**
  * Returns an array containing the specified [Short] numbers.
  */
-[Intrinsic("kotlin.arrays.array")] public fun shortArray(vararg content : Short) : ShortArray       = content
+[Intrinsic("kotlin.arrays.array")] public fun shortArrayOf(vararg content : Short) : ShortArray       = content
 
 /**
  * Returns an array containing the specified [Byte] numbers.
  */
-[Intrinsic("kotlin.arrays.array")] public fun byteArray(vararg content : Byte) : ByteArray          = content
+[Intrinsic("kotlin.arrays.array")] public fun byteArrayOf(vararg content : Byte) : ByteArray          = content
 
 /**
  * Returns an array containing the specified boolean values.
  */
-[Intrinsic("kotlin.arrays.array")] public fun booleanArray(vararg content : Boolean) : BooleanArray = content
+[Intrinsic("kotlin.arrays.array")] public fun booleanArrayOf(vararg content : Boolean) : BooleanArray = content
+
 
 /**
  * Creates an input stream for reading data from this byte array.
@@ -76,11 +77,14 @@ public fun ByteArray.toString(charset: String): String = String(this, charset)
 public fun ByteArray.toString(charset: Charset): String = String(this, charset)
 
 /**
- * Returns an array containing the elements of this collection.
+ * Returns a *typed* array containing all of the elements of this collection.
+ *
+ * Allocates an array of runtime type `T` having its size equal to the size of this collection
+ * and populates the array with the elements of this collection.
  */
-[Intrinsic("kotlin.collections.copyToArray")] public fun <reified T> Collection<T>.copyToArray(): Array<T> =
+[Intrinsic("kotlin.collections.copyToArray")] public fun <reified T> Collection<T>.toTypedArray(): Array<T> =
         throw UnsupportedOperationException()
 
 /** Returns the array if it's not null, or an empty array otherwise. */
-public inline fun <reified T> Array<out T>?.orEmpty(): Array<out T> = this ?: array<T>()
+public inline fun <reified T> Array<out T>?.orEmpty(): Array<out T> = this ?: arrayOf<T>()
 

@@ -91,7 +91,7 @@ class CollectionJVMTest {
 
     test fun toArray() {
         val data = listOf("foo", "bar")
-        val arr = data.copyToArray()
+        val arr = data.toTypedArray()
         println("Got array ${arr}")
         assertEquals(2, arr.size())
         todo {
@@ -125,7 +125,7 @@ class CollectionJVMTest {
     }
 
     test fun filterIsInstanceArray() {
-        val src: Array<Any> = array(1, 2, 3.toDouble(), "abc", "cde")
+        val src: Array<Any> = arrayOf(1, 2, 3.toDouble(), "abc", "cde")
 
         val intValues: List<Int> = src.filterIsInstance<Int>()
         assertEquals(listOf(1, 2), intValues)
