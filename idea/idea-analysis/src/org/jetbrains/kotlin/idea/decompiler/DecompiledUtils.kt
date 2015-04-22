@@ -64,3 +64,13 @@ public fun isKotlinInternalCompiledFile(file: VirtualFile): Boolean {
     return header.kind == KotlinClassHeader.Kind.SYNTHETIC_CLASS ||
            (header.kind == KotlinClassHeader.Kind.CLASS && header.classKind != null && header.classKind != KotlinClass.Kind.CLASS)
 }
+
+public fun isKotlinJavascriptInternalCompiledFile(file: VirtualFile): Boolean {
+    if (file.getExtension() != KotlinJavascriptMetaFileType.INSTANCE.getDefaultExtension()) {
+        return false
+    }
+
+    if (file.getNameWithoutExtension().endsWith(".Companion")) return true
+
+    return false
+}
