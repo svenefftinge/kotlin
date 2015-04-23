@@ -1,7 +1,9 @@
 package foo
 
-// CHECK_CONTAINS_NO_CALLS: test
-// CHECK_VARS_COUNT: function=test count=0
+// CHECK_CONTAINS_NO_CALLS: test1
+// CHECK_CONTAINS_NO_CALLS: test2
+// CHECK_VARS_COUNT: function=test1 count=0
+// CHECK_VARS_COUNT: function=test2 count=1
 
 var log = ""
 
@@ -20,11 +22,18 @@ inline fun run3(fn: ()->Int): Int {
     return 3 + run2(fn)
 }
 
-fun test(x: Int): Int = run3 { x }
+fun test1(x: Int): Int = run3 { x }
+
+fun test2(x: Int): Int {
+    val result = run3 { x }
+    return result
+}
 
 fun box(): String {
-    assertEquals(7, test(1))
+    assertEquals(7, test1(1))
     assertEquals("3;2;1;", log)
+
+    assertEquals(7, test2(1))
 
     return "OK"
 }
