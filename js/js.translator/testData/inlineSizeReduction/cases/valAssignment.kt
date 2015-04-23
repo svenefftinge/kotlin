@@ -6,7 +6,7 @@ package foo
 inline fun sum(x: Int, y: Int): Int {
     if (x == 0 || y == 0) return 0
 
-    return x * y
+    return x + y
 }
 
 fun test(x: Int, y: Int): Int {
@@ -16,6 +16,7 @@ fun test(x: Int, y: Int): Int {
 }
 
 fun box(): String {
+    assertEquals(3, test(1, 2))
 
     return "OK"
 }
