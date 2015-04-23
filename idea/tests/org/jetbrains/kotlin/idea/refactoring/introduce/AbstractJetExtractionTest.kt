@@ -17,15 +17,18 @@
 package org.jetbrains.kotlin.idea.refactoring.introduce
 
 import com.intellij.ide.DataManager
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.refactoring.BaseRefactoringProcessor.ConflictsInTestsException
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.refactoring.JetRefactoringUtil
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.EXTRACT_FUNCTION
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.ExtractKotlinFunctionHandler
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.*
-import org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter.IntroduceParameterDescriptor
-import org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter.KotlinIntroduceParameterHandler
+import org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter.*
+import org.jetbrains.kotlin.idea.refactoring.introduce.introduceProperty.INTRODUCE_PROPERTY
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceProperty.KotlinIntroducePropertyHandler
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.KotlinIntroduceVariableHandler
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
@@ -58,21 +61,37 @@ public abstract class AbstractJetExtractionTest() : JetLightCodeInsightFixtureTe
         }
     }
 
-    protected fun doIntroduceParameterTest(path: String) {
+    private fun doIntroduceParameterTest(path: String, asLambda: Boolean) {
         doTest(path) { file ->
-            val handler = object: KotlinIntroduceParameterHandler() {
+            val fileText = file.getText()
+
+            open class HelperImpl: KotlinIntroduceParameterHelper {
                 override fun configure(descriptor: IntroduceParameterDescriptor): IntroduceParameterDescriptor {
-                    val fileText = file.getText()
-                    val singleReplace = InTextDirectivesUtils.isDirectiveDefined(fileText, "// SINGLE_REPLACE")
-                    val withDefaultValue = InTextDirectivesUtils.getPrefixedBoolean(fileText, "// WITH_DEFAULT_VALUE:") ?: true
                     return with (descriptor) {
+                        val singleReplace = InTextDirectivesUtils.isDirectiveDefined(fileText, "// SINGLE_REPLACE")
+                        val withDefaultValue = InTextDirectivesUtils.getPrefixedBoolean(fileText, "// WITH_DEFAULT_VALUE:") ?: true
+
                         copy(occurrencesToReplace = if (singleReplace) Collections.singletonList(originalOccurrence) else occurrencesToReplace,
                              withDefaultValue = withDefaultValue)
                     }
                 }
             }
+
+            class LambdaHelperImpl: HelperImpl(), KotlinIntroduceLambdaParameterHelper {
+                override fun configureExtractLambda(descriptor: ExtractableCodeDescriptor): ExtractableCodeDescriptor {
+                    return with(descriptor) {
+                        if (name.isNullOrEmpty()) copy(suggestedNames = listOf("__dummyTestFun__")) else this
+                    }
+                }
+            }
+
+            val handler = if (asLambda) {
+                KotlinIntroduceLambdaParameterHandler(LambdaHelperImpl())
+            } else {
+                KotlinIntroduceParameterHandler(HelperImpl())
+            }
             with (handler) {
-                val target = file.findElementByComment("// TARGET:") as? JetNamedDeclaration
+                val target = (file as JetFile).findElementByComment("// TARGET:") as? JetNamedDeclaration
                 if (target != null) {
                     JetRefactoringUtil.selectExpression(fixture.getEditor(), file, true) { expression ->
                         invoke(fixture.getProject(), fixture.getEditor(), expression!!, target)
@@ -85,19 +104,32 @@ public abstract class AbstractJetExtractionTest() : JetLightCodeInsightFixtureTe
         }
     }
 
+    protected fun doIntroduceSimpleParameterTest(path: String) {
+        doIntroduceParameterTest(path, false)
+    }
+
+    protected fun doIntroduceLambdaParameterTest(path: String) {
+        doIntroduceParameterTest(path, true)
+    }
+    
     protected fun doIntroducePropertyTest(path: String) {
         doTest(path) { file ->
             val extractionTarget = propertyTargets.single {
                 it.name == InTextDirectivesUtils.findStringWithPrefixes(file.getText(), "// EXTRACTION_TARGET: ")
             }
-            val helper = object : ExtractionEngineHelper() {
-                override fun configure(
-                        descriptor: ExtractableCodeDescriptor,
-                        generatorOptions: ExtractionGeneratorOptions
-                ): ExtractionGeneratorConfiguration {
-                    return ExtractionGeneratorConfiguration(
-                            descriptor,
-                            generatorOptions.copy(target = extractionTarget)
+            val helper = object : ExtractionEngineHelper(INTRODUCE_PROPERTY) {
+                override fun configureAndRun(
+                        project: Project,
+                        editor: Editor,
+                        descriptorWithConflicts: ExtractableCodeDescriptorWithConflicts,
+                        onFinish: (ExtractionResult) -> Unit
+                ) {
+                    doRefactor(
+                            ExtractionGeneratorConfiguration(
+                                    descriptorWithConflicts.descriptor,
+                                    ExtractionGeneratorOptions.DEFAULT.copy(target = extractionTarget)
+                            ),
+                            onFinish
                     )
                 }
             }
@@ -132,15 +164,18 @@ public abstract class AbstractJetExtractionTest() : JetLightCodeInsightFixtureTe
 
             val editor = fixture.getEditor()
             val handler = ExtractKotlinFunctionHandler(
-                    helper = object : ExtractionEngineHelper() {
+                    helper = object : ExtractionEngineHelper(EXTRACT_FUNCTION) {
                         override fun adjustExtractionData(data: ExtractionData): ExtractionData {
                             return data.copy(options = extractionOptions)
                         }
 
-                        override fun configure(
-                                descriptor: ExtractableCodeDescriptor,
-                                generatorOptions: ExtractionGeneratorOptions
-                        ): ExtractionGeneratorConfiguration {
+                        override fun configureAndRun(
+                                project: Project,
+                                editor: Editor,
+                                descriptorWithConflicts: ExtractableCodeDescriptorWithConflicts,
+                                onFinish: (ExtractionResult) -> Unit
+                        ) {
+                            val descriptor = descriptorWithConflicts.descriptor
                             val actualNames = descriptor.suggestedNames
                             val allParameters = emptyOrSingletonList(descriptor.receiverParameter) + descriptor.parameters
                             val actualDescriptors = allParameters.map { renderer.render(it.originalDescriptor) }.joinToString()
@@ -160,7 +195,8 @@ public abstract class AbstractJetExtractionTest() : JetLightCodeInsightFixtureTe
                             else {
                                 descriptor
                             }
-                            return ExtractionGeneratorConfiguration(newDescriptor, generatorOptions)
+
+                            doRefactor(ExtractionGeneratorConfiguration(newDescriptor, ExtractionGeneratorOptions.DEFAULT), onFinish)
                         }
                     }
             )
