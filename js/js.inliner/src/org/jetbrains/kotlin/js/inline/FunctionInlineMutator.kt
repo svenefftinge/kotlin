@@ -121,8 +121,9 @@ class FunctionInlineMutator private (private val call: JsInvocation, private val
     }
 
     private fun doReplaceReturns() {
-        variableReferenceForResult?.let {
-            resultExpr = it
+        val resultReference = getResultReference()
+        if (resultReference != null) {
+            resultExpr = resultReference
         }
         assert(resultExpr == null || resultExpr is JsNameRef)
 
@@ -140,51 +141,48 @@ class FunctionInlineMutator private (private val call: JsInvocation, private val
         }
     }
 
-    private val variableReferenceForResult: JsNameRef?
-        get() {
-            if (!isResultNeeded) return null
+    private fun getResultReference(): JsNameRef? {
+        if (!isResultNeeded) return null
 
-            val existingReference = when (currentStatement) {
-                is JsExpressionStatement -> {
-                    val expression = currentStatement.getExpression() as? JsBinaryOperation
-                    expression?.variableReferenceForResult
-                }
-                is JsVars -> currentStatement.variableReferenceForResult
-                else -> null
+        val existingReference = when (currentStatement) {
+            is JsExpressionStatement -> {
+                val expression = currentStatement.getExpression() as? JsBinaryOperation
+                expression?.getResultReference()
             }
-
-            if (existingReference != null) return existingReference
-
-            val resultName = namingContext.getFreshName(getResultLabel())
-            namingContext.newVar(resultName, null)
-            return resultName.makeRef()
+            is JsVars -> currentStatement.getResultReference()
+            else -> null
         }
 
-    private val JsBinaryOperation.variableReferenceForResult: JsNameRef?
-        get() {
-            if (operator !== JsBinaryOperator.ASG || arg2 !== call) return null
+        if (existingReference != null) return existingReference
 
-            return arg1 as? JsNameRef
+        val resultName = namingContext.getFreshName(getResultLabel())
+        namingContext.newVar(resultName, null)
+        return resultName.makeRef()
+    }
+
+    private fun JsBinaryOperation.getResultReference(): JsNameRef? {
+        if (operator !== JsBinaryOperator.ASG || arg2 !== call) return null
+
+        return arg1 as? JsNameRef
+    }
+
+    private fun JsVars.getResultReference(): JsNameRef? {
+        val vars = getVars()
+        val variable = vars.first()
+
+        // var a = expr1 + call() is ok, but we don't want to reuse 'a' for result,
+        // as it means to replace every 'return expr2' to 'a = expr1 + expr2'.
+        // If there is more than one return, expr1 copies are undesirable.
+        if (variable.initExpression !== call || vars.size() > 1) return null
+
+        val varName = variable.getName()
+        with (inliningContext.statementContext) {
+            removeMe()
+            addPrevious(newVar(varName, null))
         }
 
-    private val JsVars.variableReferenceForResult: JsNameRef?
-        get() {
-            val vars = getVars()
-            val variable = vars.first()
-
-            // var a = expr1 + call() is ok, but we don't want to reuse 'a' for result,
-            // as it means to replace every 'return expr2' to 'a = expr1 + expr2'.
-            // If there is more than one return, expr1 copies are undesirable.
-            if (variable.initExpression !== call || vars.size() > 1) return null
-
-            val varName = variable.getName()
-            with (inliningContext.statementContext) {
-                removeMe()
-                addPrevious(newVar(varName, null))
-            }
-
-            return varName.makeRef()
-        }
+        return varName.makeRef()
+    }
 
     private fun getArguments(): List<JsExpression> {
         val arguments = call.getArguments()
