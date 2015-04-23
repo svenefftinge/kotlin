@@ -48,6 +48,7 @@ import org.jetbrains.kotlin.resolve.calls.results.OverloadResolutionResultsImpl;
 import org.jetbrains.kotlin.resolve.calls.results.OverloadResolutionResultsUtil;
 import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowInfo;
 import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowValue;
+import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowValueFactory;
 import org.jetbrains.kotlin.resolve.calls.smartcasts.Nullability;
 import org.jetbrains.kotlin.resolve.calls.tasks.ExplicitReceiverKind;
 import org.jetbrains.kotlin.resolve.calls.tasks.ResolutionCandidate;
@@ -876,8 +877,17 @@ public class BasicExpressionTypingVisitor extends ExpressionTypingVisitor {
                     JetExpression stubExpression = ExpressionTypingUtils.createFakeExpressionOfType(baseExpression.getProject(), context.trace, "$e", type);
                     checkLValue(context.trace, context, baseExpression, stubExpression);
                 }
-                // TODO : Maybe returnType?
-                result = receiverType;
+                // Here return type can never be nullable, but receiver type can
+                // For nullable receiver, its type should be the result, otherwise we'll lose this information
+                // For non-nullable receiver, return type should be the result (as an alternative, we can make receiver type not-nullable)
+                // See also KT-7561
+                DataFlowValue receiverValue = DataFlowValueFactory.createDataFlowValue(call.getExplicitReceiver(), context);
+                if (context.dataFlowInfo.getNullability(receiverValue).canBeNull()) {
+                    result = receiverType;
+                }
+                else {
+                    result = returnType;
+                }
             }
         }
         else {

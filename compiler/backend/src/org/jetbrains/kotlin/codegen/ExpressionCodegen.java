@@ -3322,7 +3322,9 @@ public class ExpressionCodegen extends JetVisitor<StackValue, StackValue> implem
         final boolean isPrimitiveNumberClassDescriptor = isPrimitiveNumberClassDescriptor(cls);
         if (isPrimitiveNumberClassDescriptor && AsmUtil.isPrimitive(asmBaseType)) {
             JetExpression operand = expression.getBaseExpression();
-            if (operand instanceof JetReferenceExpression && asmResultType == Type.INT_TYPE) {
+            // Optimization for a simple name which is of a real Int but not of an Int smart casted from Int?
+            if (operand instanceof JetReferenceExpression && asmResultType == Type.INT_TYPE &&
+                bindingContext.get(BindingContext.SMARTCAST, operand) == null) {
                 int index = indexOfLocal((JetReferenceExpression) operand);
                 if (index >= 0) {
                     return StackValue.postIncrement(index, increment);

@@ -1414,6 +1414,24 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
             doTest(fileName);
         }
 
+        @TestMetadata("kt725assign.kt")
+        public void testKt725assign() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("compiler/testData/codegen/box/classes/kt725assign.kt");
+            doTest(fileName);
+        }
+
+        @TestMetadata("kt725prefix.kt")
+        public void testKt725prefix() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("compiler/testData/codegen/box/classes/kt725prefix.kt");
+            doTest(fileName);
+        }
+
+        @TestMetadata("kt725short.kt")
+        public void testKt725short() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("compiler/testData/codegen/box/classes/kt725short.kt");
+            doTest(fileName);
+        }
+
         @TestMetadata("kt903.kt")
         public void testKt903() throws Exception {
             String fileName = JetTestUtils.navigationMetadata("compiler/testData/codegen/box/classes/kt903.kt");
