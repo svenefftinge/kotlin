@@ -17,7 +17,8 @@
 package org.jetbrains.kotlin.psi;
 
 import com.intellij.lang.ASTNode;
-import kotlin.Function1;
+import kotlin.*;
+import kotlin.jvm.functions.*;
 import kotlin.KotlinPackage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.psi.stubs.KotlinPlaceHolderStub;
