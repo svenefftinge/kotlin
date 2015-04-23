@@ -11,12 +11,20 @@ inline fun sign(x: Int): Int {
     return 1
 }
 
-fun test(x: Int): Int = sign(x)
+fun test(x: Int, y: Int): Int {
+    if (x != 0) {
+        return sign(x)
+    }
+
+    return sign(y)
+}
 
 fun box(): String {
-    assertEquals(-1, test(-2))
-    assertEquals(0, test(0))
-    assertEquals(1, test(2))
+    assertEquals(-1, test(-2, 2))
+    assertEquals(1, test(2, -2))
+    assertEquals(-1, test(0, -2))
+    assertEquals(1, test(0, 2))
+    assertEquals(0, test(0, 0))
 
     return "OK"
 }
