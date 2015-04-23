@@ -82,7 +82,7 @@ public class BindingContextUtils {
     }
 
     @NotNull
-    public static JetType getNotNullType(
+    public static JetType getTypeNotNull(
             @NotNull BindingContext bindingContext,
             @NotNull JetExpression expression
     ) {
@@ -157,10 +157,11 @@ public class BindingContextUtils {
 
     @Nullable
     public static JetTypeInfo getRecordedTypeInfo(@NotNull JetExpression expression, @NotNull BindingContext context) {
+        // noinspection ConstantConditions
+        if (!context.get(BindingContext.PROCESSED, expression)) return null;
         // NB: should never return null if expression is already processed
-        if (!Boolean.TRUE.equals(context.get(BindingContext.PROCESSED, expression))) return null;
         JetTypeInfo result = context.get(BindingContext.EXPRESSION_TYPE_INFO, expression);
-        return result != null ? result : TypeInfoFactoryPackage.createTypeInfo(DataFlowInfo.EMPTY);
+        return result != null ? result : TypeInfoFactoryPackage.noTypeInfo(DataFlowInfo.EMPTY);
     }
 
     public static boolean isExpressionWithValidReference(

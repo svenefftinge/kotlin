@@ -149,6 +149,11 @@ public class DataFlowUtils {
         return checkType(expressionType, expression, context, null);
     }
 
+    @NotNull
+    public static JetTypeInfo checkType(@NotNull JetTypeInfo typeInfo, @NotNull JetExpression expression, @NotNull ResolutionContext context) {
+        return typeInfo.replaceType(checkType(typeInfo.getType(), expression, context));
+    }
+
     @Nullable
     public static JetType checkType(
             @Nullable JetType expressionType,
@@ -221,11 +226,16 @@ public class DataFlowUtils {
     }
 
     @NotNull
+    public static JetTypeInfo checkImplicitCast(@NotNull JetTypeInfo typeInfo, @NotNull JetExpression expression, @NotNull ResolutionContext context, boolean isStatement) {
+        return typeInfo.replaceType(checkImplicitCast(typeInfo.getType(), expression, context, isStatement));
+    }
+
+    @NotNull
     public static JetTypeInfo illegalStatementType(@NotNull JetExpression expression, @NotNull ExpressionTypingContext context, @NotNull ExpressionTypingInternals facade) {
         facade.checkStatementType(
                 expression, context.replaceExpectedType(TypeUtils.NO_EXPECTED_TYPE).replaceContextDependency(INDEPENDENT));
         context.trace.report(EXPRESSION_EXPECTED.on(expression, expression));
-        return TypeInfoFactoryPackage.createTypeInfo(context);
+        return TypeInfoFactoryPackage.noTypeInfo(context);
     }
 
     @NotNull

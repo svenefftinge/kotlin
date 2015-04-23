@@ -51,8 +51,9 @@ public class PatternMatchingTypingVisitor extends ExpressionTypingVisitor {
 
     @Override
     public JetTypeInfo visitIsExpression(@NotNull JetIsExpression expression, ExpressionTypingContext contextWithExpectedType) {
-        ExpressionTypingContext context = contextWithExpectedType.replaceExpectedType(NO_EXPECTED_TYPE).replaceContextDependency(
-                INDEPENDENT);
+        ExpressionTypingContext context = contextWithExpectedType
+                                            .replaceExpectedType(NO_EXPECTED_TYPE)
+                                            .replaceContextDependency(INDEPENDENT);
         JetExpression leftHandSide = expression.getLeftHandSide();
         JetTypeInfo typeInfo = facade.safeGetTypeInfo(leftHandSide, context.replaceScope(context.scope));
         JetType knownType = typeInfo.getType();
@@ -62,7 +63,7 @@ public class PatternMatchingTypingVisitor extends ExpressionTypingVisitor {
             DataFlowInfo newDataFlowInfo = conditionInfo.and(typeInfo.getDataFlowInfo());
             context.trace.record(BindingContext.DATAFLOW_INFO_AFTER_CONDITION, expression, newDataFlowInfo);
         }
-        return typeInfo.replaceType(KotlinBuiltIns.getInstance().getBooleanType()).checkType(expression, contextWithExpectedType);
+        return DataFlowUtils.checkType(typeInfo.replaceType(KotlinBuiltIns.getInstance().getBooleanType()), expression, contextWithExpectedType);
     }
 
     @Override

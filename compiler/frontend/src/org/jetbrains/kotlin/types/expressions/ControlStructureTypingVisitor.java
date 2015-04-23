@@ -111,8 +111,8 @@ public class ControlStructureTypingVisitor extends ExpressionTypingVisitor {
                        : result;
             }
             return TypeInfoFactoryPackage.createTypeInfo(DataFlowUtils.checkImplicitCast(
-                                                                    components.builtIns.getUnitType(), ifExpression,
-                                                                    contextWithExpectedType, isStatement
+                                                                 components.builtIns.getUnitType(), ifExpression,
+                                                                 contextWithExpectedType, isStatement
                                                          ),
                                                          thenInfo.or(elseInfo)
             );
@@ -189,8 +189,12 @@ public class ControlStructureTypingVisitor extends ExpressionTypingVisitor {
         } else {
             dataFlowInfo = typeInfo.getDataFlowInfo().or(otherInfo);
         }
-        return typeInfo.replaceType(components.builtIns.getUnitType()).checkType(ifExpression, context).
-                checkImplicitCast(ifExpression, context, isStatement).replaceDataFlowInfo(dataFlowInfo);
+        return DataFlowUtils.checkImplicitCast(DataFlowUtils.checkType(typeInfo.replaceType(components.builtIns.getUnitType()),
+                                                                       ifExpression,
+                                                                       context),
+                                               ifExpression,
+                                               context,
+                                               isStatement).replaceDataFlowInfo(dataFlowInfo);
     }
 
     @Override
@@ -221,8 +225,9 @@ public class ControlStructureTypingVisitor extends ExpressionTypingVisitor {
             bodyTypeInfo = components.expressionTypingServices.getBlockReturnedTypeWithWritableScope(
                     scopeToExtend, Collections.singletonList(body),
                     CoercionStrategy.NO_COERCION, context.replaceDataFlowInfo(conditionInfo));
-        } else {
-            bodyTypeInfo = TypeInfoFactoryPackage.createTypeInfo(conditionInfo);
+        }
+        else {
+            bodyTypeInfo = TypeInfoFactoryPackage.noTypeInfo(conditionInfo);
         }
 
         // Condition is false at this point only if there is no jumps outside
@@ -239,8 +244,9 @@ public class ControlStructureTypingVisitor extends ExpressionTypingVisitor {
             // but without affecting changing variables
             dataFlowInfo = dataFlowInfo.and(loopVisitor.clearDataFlowInfoForAssignedLocalVariables(bodyTypeInfo.getJumpFlowInfo()));
         }
-        return bodyTypeInfo.replaceType(components.builtIns.getUnitType()).checkType(expression, contextWithExpectedType).replaceDataFlowInfo(
-                dataFlowInfo);
+        return DataFlowUtils
+                .checkType(bodyTypeInfo.replaceType(components.builtIns.getUnitType()), expression, contextWithExpectedType)
+                .replaceDataFlowInfo(dataFlowInfo);
     }
 
     private boolean containsJumpOutOfLoop(final JetLoopExpression loopExpression, final ExpressionTypingContext context) {
@@ -304,18 +310,8 @@ public class ControlStructureTypingVisitor extends ExpressionTypingVisitor {
         // See KT-6283
         JetTypeInfo bodyTypeInfo;
         if (body instanceof JetFunctionLiteralExpression) {
-            JetFunctionLiteralExpression function = (JetFunctionLiteralExpression) body;
-            JetFunctionLiteral functionLiteral = function.getFunctionLiteral();
-            if (!functionLiteral.hasParameterSpecification()) {
-                WritableScope writableScope = newWritableScopeImpl(context, "do..while body scope");
-                conditionScope = writableScope;
-                bodyTypeInfo = components.expressionTypingServices.getBlockReturnedTypeWithWritableScope(
-                        writableScope, functionLiteral.getBodyExpression().getStatements(), CoercionStrategy.NO_COERCION, context);
-                context.trace.record(BindingContext.BLOCK, function);
-            }
-            else {
-                bodyTypeInfo = facade.getTypeInfo(body, context.replaceScope(context.scope));
-            }
+            // As a matter of fact, function literal is always unused at this point
+            bodyTypeInfo = facade.getTypeInfo(body, context.replaceScope(context.scope));
         }
         else if (body != null) {
             WritableScope writableScope = newWritableScopeImpl(context, "do..while body scope");
@@ -331,7 +327,7 @@ public class ControlStructureTypingVisitor extends ExpressionTypingVisitor {
                     writableScope, block, CoercionStrategy.NO_COERCION, context);
         }
         else {
-            bodyTypeInfo = TypeInfoFactoryPackage.createTypeInfo(context);
+            bodyTypeInfo = TypeInfoFactoryPackage.noTypeInfo(context);
         }
         JetExpression condition = expression.getCondition();
         DataFlowInfo conditionDataFlowInfo = checkCondition(conditionScope, condition, context);
@@ -346,13 +342,16 @@ public class ControlStructureTypingVisitor extends ExpressionTypingVisitor {
         // Here we must record data flow information at the end of the body (or at the first jump, to be precise) and
         // .and it with entrance data flow information, because do-while body is executed at least once
         // See KT-6283
+        // NB: it's really important to do it for non-empty body which is not a function literal
+        // If it's a function literal, it appears always unused so it's no matter what we do at this point
         if (body != null) {
             // We should take data flow info from the first jump point,
             // but without affecting changing variables
             dataFlowInfo = dataFlowInfo.and(loopVisitor.clearDataFlowInfoForAssignedLocalVariables(bodyTypeInfo.getJumpFlowInfo()));
         }
-        return bodyTypeInfo.replaceType(components.builtIns.getUnitType()).checkType(expression, contextWithExpectedType).replaceDataFlowInfo(
-                dataFlowInfo);
+        return DataFlowUtils
+                .checkType(bodyTypeInfo.replaceType(components.builtIns.getUnitType()), expression, contextWithExpectedType)
+                .replaceDataFlowInfo(dataFlowInfo);
     }
 
     @Override
@@ -380,7 +379,7 @@ public class ControlStructureTypingVisitor extends ExpressionTypingVisitor {
             }
         }
         else {
-            loopRangeInfo = TypeInfoFactoryPackage.createTypeInfo(context);
+            loopRangeInfo = TypeInfoFactoryPackage.noTypeInfo(context);
         }
 
         WritableScope loopScope = newWritableScopeImpl(context, "Scope with for-loop index");
@@ -411,8 +410,9 @@ public class ControlStructureTypingVisitor extends ExpressionTypingVisitor {
             bodyTypeInfo = loopRangeInfo;
         }
 
-        return bodyTypeInfo.replaceType(components.builtIns.getUnitType()).checkType(expression, contextWithExpectedType).replaceDataFlowInfo(
-                loopRangeInfo.getDataFlowInfo());
+        return DataFlowUtils
+                .checkType(bodyTypeInfo.replaceType(components.builtIns.getUnitType()), expression, contextWithExpectedType)
+                .replaceDataFlowInfo(loopRangeInfo.getDataFlowInfo());
     }
 
     private VariableDescriptor createLoopParameterDescriptor(
@@ -480,7 +480,7 @@ public class ControlStructureTypingVisitor extends ExpressionTypingVisitor {
             }
         }
 
-        JetTypeInfo result = TypeInfoFactoryPackage.createTypeInfo(context);
+        JetTypeInfo result = TypeInfoFactoryPackage.noTypeInfo(context);
         if (finallyBlock != null) {
             result = facade.getTypeInfo(finallyBlock.getFinalExpression(),
                                         context.replaceExpectedType(NO_EXPECTED_TYPE));
