@@ -41,7 +41,7 @@ import java.util.zip.GZIPOutputStream
 import kotlin.platform.platformStatic
 
 public object KotlinJavascriptSerializationUtil {
-    private val PACKAGE_FILE_SUFFIX = "/.kotlin_package"
+    private val PACKAGE_FILE_EXT = ".kotlin_package"
 
     platformStatic
     public fun createPackageFragmentProvider(moduleDescriptor: ModuleDescriptor, metadata: ByteArray, storageManager: StorageManager): PackageFragmentProvider? {
@@ -129,6 +129,10 @@ public object KotlinJavascriptSerializationUtil {
         return BuiltInsSerializationUtil.getClassMetadataPath(classDescriptor.classId)
     }
 
+    private fun getPackageName(filePath: String): String {
+        return filePath.substringBeforeLast('/').replace('/', '.')
+    }
+
     private fun getPackages(contentMap: Map<String, ByteArray>): List<String> =
-            contentMap.keySet().filter { it.endsWith(PACKAGE_FILE_SUFFIX) } map { it.substring(0, it.length() - PACKAGE_FILE_SUFFIX.length()).replace('/', '.') }
+            contentMap.keySet().filter { it.endsWith(PACKAGE_FILE_EXT) }.map { getPackageName(it) }
 }
