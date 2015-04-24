@@ -65,6 +65,7 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.TransientReceiver;
 import org.jetbrains.kotlin.resolve.validation.SymbolUsageValidator;
 import org.jetbrains.kotlin.types.*;
 import org.jetbrains.kotlin.types.checker.JetTypeChecker;
+import org.jetbrains.kotlin.types.expressions.typeInfoFactory.TypeInfoFactoryPackage;
 import org.jetbrains.kotlin.util.slicedMap.WritableSlice;
 import org.jetbrains.kotlin.utils.ThrowingList;
 
@@ -88,7 +89,6 @@ import static org.jetbrains.kotlin.types.TypeUtils.noExpectedType;
 import static org.jetbrains.kotlin.types.expressions.ControlStructureTypingUtils.createCallForSpecialConstruction;
 import static org.jetbrains.kotlin.types.expressions.ExpressionTypingUtils.*;
 import static org.jetbrains.kotlin.types.expressions.TypeReconstructionUtil.reconstructBareType;
-import org.jetbrains.kotlin.types.expressions.typeInfoFactory.TypeInfoFactoryPackage;
 
 @SuppressWarnings("SuspiciousMethodCalls")
 public class BasicExpressionTypingVisitor extends ExpressionTypingVisitor {
@@ -228,7 +228,7 @@ public class BasicExpressionTypingVisitor extends ExpressionTypingVisitor {
         Collection<JetType> possibleTypes = DataFlowUtils.getAllPossibleTypes(
                 expression.getLeft(), context.dataFlowInfo, actualType, context);
         for (JetType possibleType : possibleTypes) {
-            if (typeChecker.isSubtypeOf(possibleType, targetType)) {
+            if (possibleType.equals(targetType)) {
                 context.trace.report(USELESS_CAST.on(expression));
                 return;
             }
