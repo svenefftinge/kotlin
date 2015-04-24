@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.resolve.calls.model.ResolvedValueArgument
 import org.jetbrains.kotlin.JetNodeTypes
 import java.math.BigInteger
 import org.jetbrains.kotlin.diagnostics.Errors
+import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import kotlin.platform.platformStatic
@@ -55,6 +56,8 @@ public class ConstantExpressionEvaluator private (val trace: BindingTrace) : Jet
             }
             return false
         }
+
+        private val zeroValue = ErrorValue.create("Division by zero")
     }
 
     private fun evaluate(expression: JetExpression, expectedType: JetType?): CompileTimeConstant<*>? {
@@ -65,6 +68,9 @@ public class ConstantExpressionEvaluator private (val trace: BindingTrace) : Jet
 
         val compileTimeConstant = expression.accept(this, expectedType ?: TypeUtils.NO_EXPECTED_TYPE)
         if (compileTimeConstant != null) {
+            if (compileTimeConstant == zeroValue) {
+                trace.report(Errors.DIVISION_BY_ZERO.on(expression))
+            }
             trace.record(BindingContext.COMPILE_TIME_VALUE, expression, compileTimeConstant)
             return compileTimeConstant
         }
@@ -213,7 +219,7 @@ public class ConstantExpressionEvaluator private (val trace: BindingTrace) : Jet
             if (argumentForParameter == null) return null
 
             if (isDivisionByZero(resultingDescriptorName.asString(), argumentForParameter.value)) {
-                return ErrorValue.create("Division by zero")
+                return zeroValue
             }
 
             val result = evaluateBinaryAndCheck(argumentForReceiver, argumentForParameter, resultingDescriptorName.asString(), callExpression)
