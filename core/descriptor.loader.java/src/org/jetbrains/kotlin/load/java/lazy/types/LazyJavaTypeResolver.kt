@@ -55,10 +55,9 @@ class LazyJavaTypeResolver(
     public fun transformJavaType(javaType: JavaType, attr: JavaTypeAttributes): JetType {
         return when (javaType) {
             is JavaPrimitiveType -> {
-                val canonicalText = javaType.getCanonicalText()
-                val jetType = JavaToKotlinClassMap.INSTANCE.mapPrimitiveKotlinClass(canonicalText)
-                assert(jetType != null, "Primitive type is not found: " + canonicalText)
-                jetType!!
+                val primitiveType = javaType.getType()
+                if (primitiveType != null) KotlinBuiltIns.getInstance().getPrimitiveJetType(primitiveType)
+                else KotlinBuiltIns.getInstance().getUnitType()
             }
             is JavaClassifierType ->
                 if (PLATFORM_TYPES && attr.allowFlexible && attr.howThisTypeIsUsed != SUPERTYPE)
@@ -75,13 +74,12 @@ class LazyJavaTypeResolver(
     public fun transformArrayType(arrayType: JavaArrayType, attr: JavaTypeAttributes, isVararg: Boolean = false): JetType {
         return run {
             val javaComponentType = arrayType.getComponentType()
-            if (javaComponentType is JavaPrimitiveType) {
-                val jetType = JavaToKotlinClassMap.INSTANCE.mapPrimitiveKotlinClass("[" + javaComponentType.getCanonicalText())
-                if (jetType != null) {
-                    return@run if (PLATFORM_TYPES && attr.allowFlexible)
-                                   FlexibleJavaClassifierTypeCapabilities.create(jetType, TypeUtils.makeNullable(jetType))
-                               else TypeUtils.makeNullableAsSpecified(jetType, !attr.isMarkedNotNull)
-                }
+            val primitiveType = (javaComponentType as? JavaPrimitiveType)?.getType()
+            if (primitiveType != null) {
+                val jetType = KotlinBuiltIns.getInstance().getPrimitiveArrayJetType(primitiveType)
+                return@run if (PLATFORM_TYPES && attr.allowFlexible)
+                    FlexibleJavaClassifierTypeCapabilities.create(jetType, TypeUtils.makeNullable(jetType))
+                else TypeUtils.makeNullableAsSpecified(jetType, !attr.isMarkedNotNull)
             }
 
             val componentType = transformJavaType(javaComponentType,
@@ -148,7 +146,7 @@ class LazyJavaTypeResolver(
                 return c.reflectionTypes.kClass
             }
 
-            val javaToKotlinClassMap = JavaToKotlinClassMap.INSTANCE
+            val javaToKotlin = JavaToKotlinClassMap.INSTANCE
 
             val howThisTypeIsUsedEffectively = when {
                 attr.flexibility == FLEXIBLE_LOWER_BOUND -> MEMBER_SIGNATURE_COVARIANT
@@ -156,13 +154,21 @@ class LazyJavaTypeResolver(
 
                 // This case has to be checked before isMarkedReadOnly/isMarkedMutable, because those two are slow
                 // not mapped, we don't care about being marked mutable/read-only
-                javaToKotlinClassMap.mapPlatformClass(fqName).isEmpty() -> attr.howThisTypeIsUsed
+                javaToKotlin.mapPlatformClass(fqName).isEmpty() -> attr.howThisTypeIsUsed
 
                 // Read (possibly external) annotations
                 else -> attr.howThisTypeIsUsedAccordingToAnnotations
             }
 
-            return javaToKotlinClassMap.mapKotlinClass(fqName, howThisTypeIsUsedEffectively)
+            val kotlinDescriptor = javaToKotlin.mapJavaToKotlin(fqName) ?: return null
+
+            if (howThisTypeIsUsedEffectively == MEMBER_SIGNATURE_COVARIANT || howThisTypeIsUsedEffectively == SUPERTYPE) {
+                if (javaToKotlin.isReadOnlyCollection(kotlinDescriptor)) {
+                    return javaToKotlin.convertReadOnlyToMutable(kotlinDescriptor)
+                }
+            }
+
+            return kotlinDescriptor
         }
 
         private fun isConstructorTypeParameter(): Boolean {

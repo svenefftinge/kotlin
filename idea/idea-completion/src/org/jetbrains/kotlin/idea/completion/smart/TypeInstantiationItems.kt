@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.idea.core.psiClassToDescriptor
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.makeNotNullable
 import org.jetbrains.kotlin.load.java.descriptors.SamConstructorDescriptor
+import org.jetbrains.kotlin.platform.JavaToKotlinClassMap
 import org.jetbrains.kotlin.psi.JetClassOrObject
 import org.jetbrains.kotlin.psi.JetDeclaration
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
@@ -45,7 +46,6 @@ import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.PossiblyBareType
 import org.jetbrains.kotlin.resolve.descriptorUtil.resolveTopLevelClass
-import org.jetbrains.kotlin.resolve.jvm.types.KotlinToJavaTypesMap
 import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 import org.jetbrains.kotlin.utils.addIfNotNull
@@ -90,9 +90,9 @@ class TypeInstantiationItems(
         if (!KotlinBuiltIns.isAny(classifier)) { // do not search inheritors of Any
             inheritanceSearchers.addInheritorSearcher(classifier, classifier, typeArgs, tail)
 
-            val javaAnalogFqName = KotlinToJavaTypesMap.getInstance().getKotlinToJavaFqName(DescriptorUtils.getFqNameSafe(classifier))
-            if (javaAnalogFqName != null) {
-                val javaAnalog = moduleDescriptor.resolveTopLevelClass(javaAnalogFqName)
+            val javaClassId = JavaToKotlinClassMap.INSTANCE.mapKotlinToJava(DescriptorUtils.getFqName(classifier))
+            if (javaClassId != null) {
+                val javaAnalog = moduleDescriptor.resolveTopLevelClass(javaClassId.asSingleFqName())
                 if (javaAnalog != null) {
                     inheritanceSearchers.addInheritorSearcher(javaAnalog, classifier, typeArgs, tail)
                 }

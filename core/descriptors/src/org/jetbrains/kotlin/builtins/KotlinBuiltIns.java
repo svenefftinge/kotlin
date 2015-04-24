@@ -101,7 +101,6 @@ public class KotlinBuiltIns {
     private final ModuleDescriptorImpl builtInsModule;
     private final BuiltinsPackageFragment builtinsPackageFragment;
 
-    private final Map<PrimitiveType, JetType> primitiveTypeToNullableJetType;
     private final Map<PrimitiveType, JetType> primitiveTypeToArrayJetType;
     private final Map<JetType, JetType> primitiveJetTypeToJetArrayType;
     private final Map<JetType, JetType> jetArrayTypeToPrimitiveJetType;
@@ -129,7 +128,6 @@ public class KotlinBuiltIns {
 
         builtinsPackageFragment = (BuiltinsPackageFragment) single(packageFragmentProvider.getPackageFragments(BUILT_INS_PACKAGE_FQ_NAME));
 
-        primitiveTypeToNullableJetType = new EnumMap<PrimitiveType, JetType>(PrimitiveType.class);
         primitiveTypeToArrayJetType = new EnumMap<PrimitiveType, JetType>(PrimitiveType.class);
         primitiveJetTypeToJetArrayType = new HashMap<JetType, JetType>();
         jetArrayTypeToPrimitiveJetType = new HashMap<JetType, JetType>();
@@ -145,7 +143,6 @@ public class KotlinBuiltIns {
         JetType type = getBuiltInTypeByClassName(primitiveType.getTypeName().asString());
         JetType arrayType = getBuiltInTypeByClassName(primitiveType.getArrayTypeName().asString());
 
-        primitiveTypeToNullableJetType.put(primitiveType, TypeUtils.makeNullable(type));
         primitiveTypeToArrayJetType.put(primitiveType, arrayType);
         primitiveJetTypeToJetArrayType.put(type, arrayType);
         jetArrayTypeToPrimitiveJetType.put(arrayType, type);
@@ -168,14 +165,14 @@ public class KotlinBuiltIns {
 
         public final FqNameUnsafe kClass = new FqName("kotlin.reflect.KClass").toUnsafe();
 
-        public final Set<FqNameUnsafe> primitiveTypes;
-        public final Set<FqNameUnsafe> primitiveArrays;
+        public final Map<FqNameUnsafe, PrimitiveType> fqNameToPrimitiveType;
+        public final Map<FqNameUnsafe, PrimitiveType> arrayClassFqNameToPrimitiveType;
         {
-            primitiveTypes = new HashSet<FqNameUnsafe>(0);
-            primitiveArrays = new HashSet<FqNameUnsafe>(0);
+            fqNameToPrimitiveType = new HashMap<FqNameUnsafe, PrimitiveType>(0);
+            arrayClassFqNameToPrimitiveType = new HashMap<FqNameUnsafe, PrimitiveType>(0);
             for (PrimitiveType primitiveType : PrimitiveType.values()) {
-                primitiveTypes.add(fqNameUnsafe(primitiveType.getTypeName().asString()));
-                primitiveArrays.add(fqNameUnsafe(primitiveType.getArrayTypeName().asString()));
+                fqNameToPrimitiveType.put(fqNameUnsafe(primitiveType.getTypeName().asString()), primitiveType);
+                arrayClassFqNameToPrimitiveType.put(fqNameUnsafe(primitiveType.getArrayTypeName().asString()), primitiveType);
             }
         }
 
@@ -187,7 +184,8 @@ public class KotlinBuiltIns {
             return fqName(simpleName).toUnsafe();
         }
 
-        private static FqName fqName(String simpleName) {
+        @NotNull
+        private static FqName fqName(@NotNull String simpleName) {
             return BUILT_INS_PACKAGE_FQ_NAME.child(Name.identifier(simpleName));
         }
 
@@ -512,11 +510,6 @@ public class KotlinBuiltIns {
     }
 
     @NotNull
-    public JetType getNullablePrimitiveJetType(@NotNull PrimitiveType primitiveType) {
-        return primitiveTypeToNullableJetType.get(primitiveType);
-    }
-
-    @NotNull
     public JetType getByteType() {
         return getPrimitiveJetType(BYTE);
     }
@@ -589,11 +582,21 @@ public class KotlinBuiltIns {
     }
 
     /**
-     * @return <code>null</code> if not primitive
+     * @return {@code null} if not primitive
      */
     @Nullable
     public JetType getPrimitiveArrayJetTypeByPrimitiveJetType(@NotNull JetType jetType) {
         return primitiveJetTypeToJetArrayType.get(jetType);
+    }
+
+    @Nullable
+    public static PrimitiveType getPrimitiveTypeByFqName(@NotNull FqNameUnsafe primitiveClassFqName) {
+        return FQ_NAMES.fqNameToPrimitiveType.get(primitiveClassFqName);
+    }
+
+    @Nullable
+    public static PrimitiveType getPrimitiveTypeByArrayClassFqName(@NotNull FqNameUnsafe primitiveArrayClassFqName) {
+        return FQ_NAMES.arrayClassFqNameToPrimitiveType.get(primitiveArrayClassFqName);
     }
 
     @NotNull
@@ -684,12 +687,12 @@ public class KotlinBuiltIns {
 
     public static boolean isPrimitiveArray(@NotNull JetType type) {
         ClassifierDescriptor descriptor = type.getConstructor().getDeclarationDescriptor();
-        return descriptor != null && FQ_NAMES.primitiveArrays.contains(DescriptorUtils.getFqName(descriptor));
+        return descriptor != null && getPrimitiveTypeByArrayClassFqName(DescriptorUtils.getFqName(descriptor)) != null;
     }
 
     public static boolean isPrimitiveType(@NotNull JetType type) {
         ClassifierDescriptor descriptor = type.getConstructor().getDeclarationDescriptor();
-        return !type.isMarkedNullable() && descriptor != null && FQ_NAMES.primitiveTypes.contains(DescriptorUtils.getFqName(descriptor));
+        return !type.isMarkedNullable() && descriptor != null && getPrimitiveTypeByFqName(DescriptorUtils.getFqName(descriptor)) != null;
     }
 
     // Functions

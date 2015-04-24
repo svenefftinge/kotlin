@@ -18,150 +18,194 @@ package org.jetbrains.kotlin.platform;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.kotlin.builtins.CompanionObjectMapping;
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns;
 import org.jetbrains.kotlin.builtins.PrimitiveType;
 import org.jetbrains.kotlin.descriptors.ClassDescriptor;
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor;
-import org.jetbrains.kotlin.load.java.components.TypeUsage;
+import org.jetbrains.kotlin.name.ClassId;
 import org.jetbrains.kotlin.name.FqName;
 import org.jetbrains.kotlin.name.FqNameUnsafe;
+import org.jetbrains.kotlin.name.Name;
 import org.jetbrains.kotlin.resolve.DescriptorUtils;
 import org.jetbrains.kotlin.resolve.jvm.JvmPrimitiveType;
-import org.jetbrains.kotlin.types.JetType;
 
+import java.lang.annotation.Annotation;
 import java.util.*;
 
-public class JavaToKotlinClassMap extends JavaToKotlinClassMapBuilder implements PlatformToKotlinClassMap {
+public class JavaToKotlinClassMap implements PlatformToKotlinClassMap {
     public static final JavaToKotlinClassMap INSTANCE = new JavaToKotlinClassMap();
 
-    private final Map<FqName, ClassDescriptor> classDescriptorMap = new HashMap<FqName, ClassDescriptor>();
-    private final Map<FqName, ClassDescriptor> classDescriptorMapForCovariantPositions = new HashMap<FqName, ClassDescriptor>();
-    private final Map<String, JetType> primitiveTypesMap = new LinkedHashMap<String, JetType>();
-    private final Map<FqName, Collection<ClassDescriptor>> packagesWithMappedClasses = new HashMap<FqName, Collection<ClassDescriptor>>();
-    private final Set<ClassDescriptor> allKotlinClasses = new LinkedHashSet<ClassDescriptor>();
+    private final Map<FqName, ClassDescriptor> javaToKotlin = new HashMap<FqName, ClassDescriptor>();
+    private final Map<FqNameUnsafe, ClassId> kotlinToJava = new HashMap<FqNameUnsafe, ClassId>();
+
+    private final Map<ClassDescriptor, ClassDescriptor> mutableToReadOnly = new HashMap<ClassDescriptor, ClassDescriptor>();
+    private final Map<ClassDescriptor, ClassDescriptor> readOnlyToMutable = new HashMap<ClassDescriptor, ClassDescriptor>();
 
     private JavaToKotlinClassMap() {
-        init();
-        initPrimitives();
-    }
-
-    private void initPrimitives() {
         KotlinBuiltIns builtIns = KotlinBuiltIns.getInstance();
-        for (JvmPrimitiveType jvmPrimitiveType : JvmPrimitiveType.values()) {
-            PrimitiveType primitiveType = jvmPrimitiveType.getPrimitiveType();
-            String name = jvmPrimitiveType.getName();
-            FqName wrapperFqName = jvmPrimitiveType.getWrapperFqName();
 
-            register(wrapperFqName, builtIns.getPrimitiveClassDescriptor(primitiveType));
-            primitiveTypesMap.put(name, builtIns.getPrimitiveJetType(primitiveType));
-            primitiveTypesMap.put("[" + name, builtIns.getPrimitiveArrayJetType(primitiveType));
-            primitiveTypesMap.put(wrapperFqName.asString(), builtIns.getNullablePrimitiveJetType(primitiveType));
-        }
-        primitiveTypesMap.put("void", KotlinBuiltIns.getInstance().getUnitType());
+        add(Object.class, builtIns.getAny());
+        add(String.class, builtIns.getString());
+        add(CharSequence.class, builtIns.getCharSequence());
+        add(Throwable.class, builtIns.getThrowable());
+        add(Cloneable.class, builtIns.getCloneable());
+        add(Number.class, builtIns.getNumber());
+        add(Comparable.class, builtIns.getComparable());
+        add(Enum.class, builtIns.getEnum());
+        add(Annotation.class, builtIns.getAnnotation());
 
-        for (JetType type : primitiveTypesMap.values()) {
-            allKotlinClasses.add((ClassDescriptor)type.getConstructor().getDeclarationDescriptor());
+        add(Iterable.class, builtIns.getIterable(), builtIns.getMutableIterable());
+        add(Iterator.class, builtIns.getIterator(), builtIns.getMutableIterator());
+        add(Collection.class, builtIns.getCollection(), builtIns.getMutableCollection());
+        add(List.class, builtIns.getList(), builtIns.getMutableList());
+        add(Set.class, builtIns.getSet(), builtIns.getMutableSet());
+        add(Map.class, builtIns.getMap(), builtIns.getMutableMap());
+        add(Map.Entry.class, builtIns.getMapEntry(), builtIns.getMutableMapEntry());
+        add(ListIterator.class, builtIns.getListIterator(), builtIns.getMutableListIterator());
+
+        for (JvmPrimitiveType jvmType : JvmPrimitiveType.values()) {
+            add(ClassId.topLevel(jvmType.getWrapperFqName()), builtIns.getPrimitiveClassDescriptor(jvmType.getPrimitiveType()));
         }
+
+        for (ClassDescriptor descriptor : CompanionObjectMapping.allClassesWithIntrinsicCompanions()) {
+            ClassDescriptor companion = descriptor.getCompanionObjectDescriptor();
+            assert companion != null : "No companion object found for " + descriptor;
+            add(ClassId.topLevel(new FqName("kotlin.jvm.internal." + descriptor.getName().asString() + "CompanionObject")), companion);
+        }
+
+        addJavaToKotlin(classId(Deprecated.class), builtIns.getDeprecatedAnnotation());
+
+        addKotlinToJava(classId(Void.class), builtIns.getNothing());
     }
 
+    /**
+     * E.g.
+     * java.lang.String -> kotlin.String
+     * java.lang.Deprecated -> kotlin.deprecated
+     * java.lang.Integer -> kotlin.Int
+     * kotlin.jvm.internal.IntCompanionObject -> kotlin.Int.Companion
+     * java.util.List -> kotlin.List
+     * java.util.Map.Entry -> kotlin.Map.Entry
+     * java.lang.Void -> null
+     */
     @Nullable
-    public JetType mapPrimitiveKotlinClass(@NotNull String name) {
-        return primitiveTypesMap.get(name);
+    public ClassDescriptor mapJavaToKotlin(@NotNull FqName fqName) {
+        return javaToKotlin.get(fqName);
     }
 
+    /**
+     * E.g.
+     * kotlin.Throwable -> java.lang.Throwable
+     * kotlin.Int -> java.lang.Integer
+     * kotlin.Int.Companion -> kotlin.jvm.internal.IntCompanionObject
+     * kotlin.Nothing -> java.lang.Void
+     * kotlin.IntArray -> null
+     */
     @Nullable
-    public ClassDescriptor mapKotlinClass(@NotNull FqName fqName, @NotNull TypeUsage typeUsage) {
-        if (typeUsage == TypeUsage.MEMBER_SIGNATURE_COVARIANT
-                || typeUsage == TypeUsage.SUPERTYPE) {
-            ClassDescriptor descriptor = classDescriptorMapForCovariantPositions.get(fqName);
-            if (descriptor != null) {
-                return descriptor;
-            }
-        }
-        return classDescriptorMap.get(fqName);
+    public ClassId mapKotlinToJava(@NotNull FqNameUnsafe kotlinFqName) {
+        return kotlinToJava.get(kotlinFqName);
     }
 
-    @NotNull
-    private static FqName fqNameByClass(@NotNull Class<?> clazz) {
-        return new FqName(clazz.getCanonicalName());
-    }
-
-    @Override
-    protected void register(@NotNull Class<?> javaClass, @NotNull ClassDescriptor kotlinDescriptor, @NotNull Direction direction) {
-        if (direction == Direction.BOTH || direction == Direction.JAVA_TO_KOTLIN) {
-            register(fqNameByClass(javaClass), kotlinDescriptor);
-        }
-    }
-
-    @Override
-    protected void register(
+    private void add(
             @NotNull Class<?> javaClass,
             @NotNull ClassDescriptor kotlinDescriptor,
             @NotNull ClassDescriptor kotlinMutableDescriptor
     ) {
-        FqName javaClassName = fqNameByClass(javaClass);
-        register(javaClassName, kotlinDescriptor);
-        registerCovariant(javaClassName, kotlinMutableDescriptor);
+        ClassId javaClassId = classId(javaClass);
+
+        add(javaClassId, kotlinDescriptor);
+        addKotlinToJava(javaClassId, kotlinMutableDescriptor);
+
+        mutableToReadOnly.put(kotlinMutableDescriptor, kotlinDescriptor);
+        readOnlyToMutable.put(kotlinDescriptor, kotlinMutableDescriptor);
     }
 
-    private void register(@NotNull FqName javaClassName, @NotNull ClassDescriptor kotlinDescriptor) {
-        classDescriptorMap.put(javaClassName, kotlinDescriptor);
-        registerClassInPackage(javaClassName.parent(), kotlinDescriptor);
+    private void add(@NotNull ClassId javaClassId, @NotNull ClassDescriptor kotlinDescriptor) {
+        addJavaToKotlin(javaClassId, kotlinDescriptor);
+        addKotlinToJava(javaClassId, kotlinDescriptor);
     }
 
-    private void registerCovariant(@NotNull FqName javaClassName, @NotNull ClassDescriptor kotlinDescriptor) {
-        classDescriptorMapForCovariantPositions.put(javaClassName, kotlinDescriptor);
-        registerClassInPackage(javaClassName.parent(), kotlinDescriptor);
+    private void add(@NotNull Class<?> javaClass, @NotNull ClassDescriptor kotlinDescriptor) {
+        add(classId(javaClass), kotlinDescriptor);
     }
 
-    private void registerClassInPackage(@NotNull FqName packageFqName, @NotNull ClassDescriptor kotlinDescriptor) {
-        Collection<ClassDescriptor> classesInPackage = packagesWithMappedClasses.get(packageFqName);
-        if (classesInPackage == null) {
-            classesInPackage = new HashSet<ClassDescriptor>();
-            packagesWithMappedClasses.put(packageFqName, classesInPackage);
-        }
-        classesInPackage.add(kotlinDescriptor);
+    private void addJavaToKotlin(@NotNull ClassId javaClassId, @NotNull ClassDescriptor kotlinDescriptor) {
+        javaToKotlin.put(javaClassId.asSingleFqName(), kotlinDescriptor);
+    }
 
-        allKotlinClasses.add(kotlinDescriptor);
+    private void addKotlinToJava(@NotNull ClassId javaClassId, @NotNull ClassDescriptor kotlinDescriptor) {
+        kotlinToJava.put(DescriptorUtils.getFqName(kotlinDescriptor), javaClassId);
+    }
+
+    @NotNull
+    private static ClassId classId(@NotNull Class<?> clazz) {
+        assert !clazz.isPrimitive() && !clazz.isArray() : "Invalid class: " + clazz;
+        Class<?> outer = clazz.getDeclaringClass();
+        return outer == null
+               ? ClassId.topLevel(new FqName(clazz.getCanonicalName()))
+               : classId(outer).createNestedClassId(Name.identifier(clazz.getSimpleName()));
     }
 
     @NotNull
     public Collection<ClassDescriptor> mapPlatformClass(@NotNull FqName fqName) {
-        ClassDescriptor kotlinAnalog = classDescriptorMap.get(fqName);
-        ClassDescriptor kotlinCovariantAnalog = classDescriptorMapForCovariantPositions.get(fqName);
-        List<ClassDescriptor> descriptors = new ArrayList<ClassDescriptor>(2);
-        if (kotlinAnalog != null) {
-            descriptors.add(kotlinAnalog);
-        }
-        if (kotlinCovariantAnalog != null) {
-            descriptors.add(kotlinCovariantAnalog);
-        }
-        return descriptors;
+        ClassDescriptor kotlinAnalog = mapJavaToKotlin(fqName);
+        if (kotlinAnalog == null) return Collections.emptySet();
+
+        ClassDescriptor kotlinMutableAnalog = readOnlyToMutable.get(kotlinAnalog);
+        if (kotlinMutableAnalog == null) return Collections.singleton(kotlinAnalog);
+
+        return Arrays.asList(kotlinAnalog, kotlinMutableAnalog);
     }
 
     @Override
     @NotNull
     public Collection<ClassDescriptor> mapPlatformClass(@NotNull ClassDescriptor classDescriptor) {
         FqNameUnsafe className = DescriptorUtils.getFqName(classDescriptor);
-        if (!className.isSafe()) {
-            return Collections.emptyList();
-        }
-        return mapPlatformClass(className.toSafe());
+        return className.isSafe() ? mapPlatformClass(className.toSafe()) : Collections.<ClassDescriptor>emptySet();
     }
 
-    @Override
-    @NotNull
-    public Collection<ClassDescriptor> mapPlatformClassesInside(@NotNull DeclarationDescriptor containingDeclaration) {
-        FqNameUnsafe fqName = DescriptorUtils.getFqName(containingDeclaration);
-        if (!fqName.isSafe()) {
-            return Collections.emptyList();
-        }
-        Collection<ClassDescriptor> result = packagesWithMappedClasses.get(fqName.toSafe());
-        return result == null ? Collections.<ClassDescriptor>emptySet() : Collections.unmodifiableCollection(result);
+    public boolean isMutableCollection(@NotNull ClassDescriptor mutable) {
+        return mutableToReadOnly.containsKey(mutable);
+    }
+
+    public boolean isReadOnlyCollection(@NotNull ClassDescriptor readOnly) {
+        return readOnlyToMutable.containsKey(readOnly);
     }
 
     @NotNull
-    public Set<ClassDescriptor> allKotlinClasses() {
-        return allKotlinClasses;
+    public ClassDescriptor convertMutableToReadOnly(@NotNull ClassDescriptor mutable) {
+        ClassDescriptor readOnly = mutableToReadOnly.get(mutable);
+        if (readOnly == null) {
+            throw new IllegalArgumentException("Given class " + mutable + " is not a mutable collection");
+        }
+        return readOnly;
+    }
+
+    @NotNull
+    public ClassDescriptor convertReadOnlyToMutable(@NotNull ClassDescriptor readOnly) {
+        ClassDescriptor mutable = readOnlyToMutable.get(readOnly);
+        if (mutable == null) {
+            throw new IllegalArgumentException("Given class " + readOnly + " is not a read-only collection");
+        }
+        return mutable;
+    }
+
+    // TODO: get rid of this method, it's unclear what it does
+    @NotNull
+    public List<ClassDescriptor> allKotlinClasses() {
+        KotlinBuiltIns builtIns = KotlinBuiltIns.getInstance();
+
+        List<ClassDescriptor> result = new ArrayList<ClassDescriptor>();
+        result.addAll(javaToKotlin.values());
+        result.addAll(readOnlyToMutable.values());
+
+        for (PrimitiveType type : PrimitiveType.values()) {
+            result.add(builtIns.getPrimitiveArrayClassDescriptor(type));
+        }
+
+        result.add(builtIns.getUnit());
+        result.add(builtIns.getNothing());
+
+        return result;
     }
 }

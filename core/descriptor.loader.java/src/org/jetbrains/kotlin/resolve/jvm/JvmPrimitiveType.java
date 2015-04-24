@@ -20,8 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.builtins.PrimitiveType;
 import org.jetbrains.kotlin.name.FqName;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public enum JvmPrimitiveType {
     BOOLEAN(PrimitiveType.BOOLEAN, "boolean", "Z", "java.lang.Boolean"),
@@ -35,17 +34,37 @@ public enum JvmPrimitiveType {
     ;
 
     private static final Set<FqName> WRAPPERS_CLASS_NAMES;
+    private static final Map<String, JvmPrimitiveType> TYPE_BY_NAME;
+    private static final Map<PrimitiveType, JvmPrimitiveType> TYPE_BY_PRIMITIVE_TYPE;
 
     static {
         WRAPPERS_CLASS_NAMES = new HashSet<FqName>();
+        TYPE_BY_NAME = new HashMap<String, JvmPrimitiveType>();
+        TYPE_BY_PRIMITIVE_TYPE = new EnumMap<PrimitiveType, JvmPrimitiveType>(PrimitiveType.class);
 
-        for (JvmPrimitiveType primitiveType : values()) {
-            WRAPPERS_CLASS_NAMES.add(primitiveType.getWrapperFqName());
+        for (JvmPrimitiveType type : values()) {
+            WRAPPERS_CLASS_NAMES.add(type.getWrapperFqName());
+            TYPE_BY_NAME.put(type.getName(), type);
+            TYPE_BY_PRIMITIVE_TYPE.put(type.getPrimitiveType(), type);
         }
     }
 
     public static boolean isWrapperClassName(@NotNull FqName className) {
         return WRAPPERS_CLASS_NAMES.contains(className);
+    }
+
+    @NotNull
+    public static JvmPrimitiveType get(@NotNull String name) {
+        JvmPrimitiveType result = TYPE_BY_NAME.get(name);
+        if (result == null) {
+            throw new AssertionError("Non-primitive type name passed: " + name);
+        }
+        return result;
+    }
+
+    @NotNull
+    public static JvmPrimitiveType get(@NotNull PrimitiveType type) {
+        return TYPE_BY_PRIMITIVE_TYPE.get(type);
     }
 
     private final PrimitiveType primitiveType;
