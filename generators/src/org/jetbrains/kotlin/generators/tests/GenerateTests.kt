@@ -313,6 +313,7 @@ fun main(args: Array<String>) {
         }
     }
 
+
     testGroup("idea/tests", "idea/testData") {
 
         testClass(javaClass<AbstractJavaTypeSubstitutorTest>()) {
@@ -833,6 +834,10 @@ fun main(args: Array<String>) {
 
         testClass(javaClass<AbstractJsCodeTest>()) {
             model("jsCode/cases")
+        }
+
+        testClass(javaClass<AbstractInlineSizeReductionTest>()) {
+            model("inlineSizeReduction/cases")
         }
     }
 

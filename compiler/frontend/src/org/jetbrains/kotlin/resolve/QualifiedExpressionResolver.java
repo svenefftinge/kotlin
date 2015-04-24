@@ -29,10 +29,14 @@ import org.jetbrains.kotlin.descriptors.*;
 import org.jetbrains.kotlin.diagnostics.Errors;
 import org.jetbrains.kotlin.name.Name;
 import org.jetbrains.kotlin.psi.*;
+import org.jetbrains.kotlin.resolve.calls.CallResolver;
 import org.jetbrains.kotlin.resolve.scopes.AbstractScopeAdapter;
 import org.jetbrains.kotlin.resolve.scopes.JetScope;
 import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue;
+import org.jetbrains.kotlin.resolve.validation.CompositeSymbolUsageValidator;
+import org.jetbrains.kotlin.resolve.validation.SymbolUsageValidator;
 
+import javax.inject.Inject;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
@@ -40,6 +44,20 @@ import java.util.Set;
 import static org.jetbrains.kotlin.diagnostics.Errors.*;
 
 public class QualifiedExpressionResolver {
+    private SymbolUsageValidator symbolUsageValidator = new CompositeSymbolUsageValidator();
+
+    /**
+     * @deprecated Instance of this class should be obtained from the Injector
+     */
+    @Deprecated
+    public QualifiedExpressionResolver() {
+    }
+
+    @Inject
+    public void setSymbolUsageValidator(SymbolUsageValidator symbolUsageValidator) {
+        this.symbolUsageValidator = symbolUsageValidator;
+    }
+
     private static final Predicate<DeclarationDescriptor> CLASSIFIERS_AND_PACKAGE_VIEWS = new Predicate<DeclarationDescriptor>() {
         @Override
         public boolean apply(@Nullable DeclarationDescriptor descriptor) {
@@ -257,7 +275,7 @@ public class QualifiedExpressionResolver {
     }
 
     @NotNull
-    private static Collection<DeclarationDescriptor> lookupSelectorDescriptors(
+    private Collection<DeclarationDescriptor> lookupSelectorDescriptors(
             @NotNull JetSimpleNameExpression selector,
             @NotNull Collection<DeclarationDescriptor> declarationDescriptors,
             @NotNull BindingTrace trace,
@@ -343,7 +361,7 @@ public class QualifiedExpressionResolver {
     }
 
     @NotNull
-    private static Collection<DeclarationDescriptor> filterAndStoreResolutionResult(
+    private Collection<DeclarationDescriptor> filterAndStoreResolutionResult(
             @NotNull Collection<LookupResult> lookupResults,
             @NotNull JetSimpleNameExpression referenceExpression,
             @NotNull BindingTrace trace,
@@ -397,7 +415,7 @@ public class QualifiedExpressionResolver {
         return filteredDescriptors;
     }
 
-    private static void storeResolutionResult(
+    private void storeResolutionResult(
             @NotNull Collection<DeclarationDescriptor> descriptors,
             @NotNull Collection<DeclarationDescriptor> canBeImportedDescriptors,
             @NotNull JetSimpleNameExpression referenceExpression,
@@ -435,6 +453,10 @@ public class QualifiedExpressionResolver {
             trace.record(BindingContext.REFERENCE_TARGET, referenceExpression, descriptors.iterator().next());
             trace.record(BindingContext.RESOLUTION_SCOPE, referenceExpression, resolutionScope);
 
+            if (descriptor instanceof ClassifierDescriptor) {
+                symbolUsageValidator.validateTypeUsage((ClassifierDescriptor) descriptor, trace, referenceExpression);
+            }
+            
             if (descriptor instanceof DeclarationDescriptorWithVisibility) {
                 checkVisibility((DeclarationDescriptorWithVisibility) descriptor, trace, referenceExpression, scopeToCheckVisibility);
             }

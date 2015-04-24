@@ -21,10 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.js.translate.expression.InlineMetadata;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.jetbrains.kotlin.js.inline.util.UtilPackage.collectInstances;
 import static org.jetbrains.kotlin.test.InTextDirectivesUtils.findLinesWithPrefixesRemoved;
@@ -91,7 +88,7 @@ public class DirectiveTestUtils {
         }
     };
 
-    private abstract static class CountNodesDirective<T extends JsNode> extends DirectiveHandler {
+    private static class CountNodesDirective<T extends JsNode> extends DirectiveHandler {
 
         @NotNull
         private final Class<T> klass;
@@ -107,8 +104,8 @@ public class DirectiveTestUtils {
             String countStr = arguments.getNamedArgument("count");
             int expectedCount = Integer.valueOf(countStr);
 
-            JsNode scope = AstSearchUtil.getFunction(ast, functionName);
-            List<T> nodes = collectInstances(klass, scope);
+            JsFunction function = AstSearchUtil.getFunction(ast, functionName);
+            List<T> nodes = collectInstances(klass, function.getBody());
             int actualCount = 0;
 
             for (T node : nodes) {
@@ -121,7 +118,9 @@ public class DirectiveTestUtils {
             assertEquals(message, expectedCount, actualCount);
         }
 
-        protected abstract int getActualCountFor(@NotNull T node, @NotNull ArgumentsHelper arguments);
+        protected int getActualCountFor(@NotNull T node, @NotNull ArgumentsHelper arguments) {
+            return 1;
+        }
     }
 
     private static final DirectiveHandler COUNT_LABELS = new CountNodesDirective<JsLabel>("CHECK_LABELS_COUNT", JsLabel.class) {
@@ -137,12 +136,9 @@ public class DirectiveTestUtils {
         }
     };
 
-    private static final DirectiveHandler COUNT_VARS = new CountNodesDirective<JsVars>("CHECK_VARS_COUNT", JsVars.class) {
-        @Override
-        protected int getActualCountFor(@NotNull JsVars node, @NotNull ArgumentsHelper arguments) {
-            return node.getVars().size();
-        }
-    };
+    private static final DirectiveHandler COUNT_VARS = new CountNodesDirective<JsVars.JsVar>("CHECK_VARS_COUNT", JsVars.JsVar.class);
+
+    private static final DirectiveHandler COUNT_BREAKS = new CountNodesDirective<JsBreak>("CHECK_BREAKS_COUNT", JsBreak.class);
 
     private static final DirectiveHandler HAS_INLINE_METADATA = new DirectiveHandler("CHECK_HAS_INLINE_METADATA") {
         @Override
@@ -164,16 +160,23 @@ public class DirectiveTestUtils {
         }
     };
 
+    private static final List<DirectiveHandler> DIRECTIVE_HANDLERS = Arrays.asList(
+            FUNCTION_CONTAINS_NO_CALLS,
+            FUNCTION_NOT_CALLED,
+            FUNCTION_CALLED_IN_SCOPE,
+            FUNCTION_NOT_CALLED_IN_SCOPE,
+            FUNCTIONS_HAVE_SAME_LINES,
+            COUNT_LABELS,
+            COUNT_VARS,
+            COUNT_BREAKS,
+            HAS_INLINE_METADATA,
+            HAS_NO_INLINE_METADATA
+    );
+
     public static void processDirectives(@NotNull JsNode ast, @NotNull String sourceCode) throws Exception {
-        FUNCTION_CONTAINS_NO_CALLS.process(ast, sourceCode);
-        FUNCTION_NOT_CALLED.process(ast, sourceCode);
-        FUNCTION_CALLED_IN_SCOPE.process(ast, sourceCode);
-        FUNCTION_NOT_CALLED_IN_SCOPE.process(ast, sourceCode);
-        FUNCTIONS_HAVE_SAME_LINES.process(ast, sourceCode);
-        COUNT_LABELS.process(ast, sourceCode);
-        COUNT_VARS.process(ast, sourceCode);
-        HAS_INLINE_METADATA.process(ast, sourceCode);
-        HAS_NO_INLINE_METADATA.process(ast, sourceCode);
+        for (DirectiveHandler handler : DIRECTIVE_HANDLERS) {
+            handler.process(ast, sourceCode);
+        }
     }
 
     public static void checkFunctionContainsNoCalls(JsNode node, String functionName) throws Exception {
