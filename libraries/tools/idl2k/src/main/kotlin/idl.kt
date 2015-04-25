@@ -43,10 +43,11 @@ enum class DefinitionType {
     TYPEDEF
     EXTENSION_INTERFACE
     ENUM
+    DICTIONARY
 }
 trait Definition
 data class TypedefDefinition(val from : String, val to : String) : Definition
-data class InterfaceDefinition(val name : String, val extendedAttributes: List<ExtendedAttribute>, val operations : List<Operation>, val attributes : List<Attribute>, val superTypes : List<String>, val constants : List<Constant>) : Definition
+data class InterfaceDefinition(val name : String, val extendedAttributes: List<ExtendedAttribute>, val operations : List<Operation>, val attributes : List<Attribute>, val superTypes : List<String>, val constants : List<Constant>, val dictionary : Boolean = false) : Definition
 data class ExtensionInterfaceDefinition(val name : String, val implements : String) : Definition
 data class EnumDefinition(val name : String) : Definition
 
@@ -212,6 +213,7 @@ class DefinitionVisitor(val extendedAttributes: List<ExtendedAttribute>) : WebID
 
     override fun defaultResult(): Definition = when(type) {
         DefinitionType.INTERFACE -> InterfaceDefinition(name, extendedAttributes, operations, attributes, inherited, constants)
+        DefinitionType.DICTIONARY -> InterfaceDefinition(name, extendedAttributes, operations, attributes, inherited, constants, true)
         DefinitionType.EXTENSION_INTERFACE -> ExtensionInterfaceDefinition(name, implements ?: "")
         DefinitionType.TYPEDEF -> TypedefDefinition(singleType ?: "", name)
         DefinitionType.ENUM -> EnumDefinition(name)
@@ -237,14 +239,39 @@ class DefinitionVisitor(val extendedAttributes: List<ExtendedAttribute>) : WebID
         return defaultResult()
     }
 
-    override fun visitEnum_(ctx: WebIDLParser.Enum_Context): Definition {
+    override fun visitEnum_(ctx: Enum_Context): Definition {
         type = DefinitionType.ENUM
         name = getName(ctx)
 
         return defaultResult()
     }
 
-    override fun visitImplementsStatement(ctx: WebIDLParser.ImplementsStatementContext): Definition {
+    override fun visitDictionary(ctx: DictionaryContext): Definition {
+        type = DefinitionType.DICTIONARY
+        name = getName(ctx)
+
+        return visitChildren(ctx)
+    }
+
+    override fun visitDictionaryMember(ctx: DictionaryMemberContext): Definition {
+        val name = ctx.children
+                ?.filter {it is TerminalNode && it.getSymbol().getType() == WebIDLLexer.IDENTIFIER_WEBIDL}
+                ?.first { it.getText() != "" }
+                ?.getText()
+
+        val type = TypeVisitor().visit(ctx)
+        val defaultValue = object : WebIDLBaseVisitor<String?>() {
+            override fun visitDefaultValue(ctx2: DefaultValueContext) : String? {
+                return ctx2.getText()
+            }
+        }.visit(ctx)
+
+        attributes.add(Attribute(name ?: "", type, false))
+
+        return defaultResult()
+    }
+
+    override fun visitImplementsStatement(ctx: ImplementsStatementContext): Definition {
         val identifiers = ctx.children.filter {it is TerminalNode && it.getSymbol().getType() == WebIDLLexer.IDENTIFIER_WEBIDL}.map {it.getText()}
 
         if (identifiers.size() >= 2) {
@@ -257,7 +284,7 @@ class DefinitionVisitor(val extendedAttributes: List<ExtendedAttribute>) : WebID
         return defaultResult()
     }
 
-    override fun visitSingleType(ctx: WebIDLParser.SingleTypeContext): Definition {
+    override fun visitSingleType(ctx: SingleTypeContext): Definition {
         singleType = ctx.getText()
         return defaultResult()
     }
