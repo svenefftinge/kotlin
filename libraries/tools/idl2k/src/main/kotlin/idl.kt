@@ -358,7 +358,7 @@ fun parseIDL(reader : Reader) : Repository {
         val extendedAttributes = ArrayList<ExtendedAttribute>()
 
         override fun visitDefinition(ctx: WebIDLParser.DefinitionContext) {
-            val declaration = DefinitionVisitor(extendedAttributes).visitChildren(ctx)
+            val declaration = DefinitionVisitor(extendedAttributes.toList()).visitChildren(ctx)
             extendedAttributes.clear()
             declarations.add(declaration)
         }
