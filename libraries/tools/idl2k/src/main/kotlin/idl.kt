@@ -35,7 +35,7 @@ import java.util.*
 
 data class ExtendedAttribute(val name : String?, val call : String, val arguments : List<String>)
 data class Operation(val name : String, val returnType : String, val parameters : List<Attribute>, val attributes : List<ExtendedAttribute>)
-data class Attribute(val name : String, val type : String, val readOnly : Boolean)
+data class Attribute(val name : String, val type : String, val readOnly : Boolean, val defaultValue : String? = null)
 data class Constant(val name : String, val type : String, val value : String?)
 
 enum class DefinitionType {
@@ -261,12 +261,17 @@ class DefinitionVisitor(val extendedAttributes: List<ExtendedAttribute>) : WebID
 
         val type = TypeVisitor().visit(ctx)
         val defaultValue = object : WebIDLBaseVisitor<String?>() {
+            private var value : String? = null
+
+            override fun defaultResult() = value
+
             override fun visitDefaultValue(ctx2: DefaultValueContext) : String? {
-                return ctx2.getText()
+                value = ctx2.getText()
+                return value
             }
         }.visit(ctx)
 
-        attributes.add(Attribute(name ?: "", type, false))
+        attributes.add(Attribute(name ?: "", type, false, defaultValue))
 
         return defaultResult()
     }
