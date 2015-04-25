@@ -61,7 +61,7 @@ private fun handleSpecialTypes(repository: Repository, type : String) : String {
     } else if (type in repository.typeDefs) {
         return "dynamic"
     } else if (type in repository.enums) {
-        return "dynamic"
+        return "String"
     } else if (type.endsWith("Callback")) {
         return "() -> Unit"
     } else if (type.startsWith("Union<")) {
@@ -74,7 +74,9 @@ private fun handleSpecialTypes(repository: Repository, type : String) : String {
 }
 
 fun <O: Appendable> O.generateInterface(repository : Repository, interface: InterfaceDefinition) {
-    appendln("native trait ${interface.name}${if (interface.superTypes.isNotEmpty()) " : " else ""}${interface.superTypes.joinToString(", ")} {")
+    val entityType = if (interface.dictionary || "Constructor" in interface.extendedAttributes.map {it.call}) "class" else "trait"
+
+    appendln("native ${entityType} ${interface.name}${if (interface.superTypes.isNotEmpty()) " : " else ""}${interface.superTypes.joinToString(", ")} {")
 
     generateInterfaceBody(repository, interface)
 
@@ -88,7 +90,8 @@ private fun <O: Appendable> O.generateInterfaceBody(repository: Repository, inte
 
     interface.attributes.filter {it.name !in superTypeAttributes}.forEach {
         val valOrVar = if (it.readOnly) "val" else "var"
-        appendln("    ${valOrVar} ${it.name} : ${mapType(repository, it.type)}")
+        val initializer = if (it.defaultValue != null) " = ${it.defaultValue}" else ""
+        appendln("    ${valOrVar} ${it.name} : ${mapType(repository, it.type)}$initializer")
     }
 
     interface.operations.filter {it.name !in superTypeOperations}.forEach {
