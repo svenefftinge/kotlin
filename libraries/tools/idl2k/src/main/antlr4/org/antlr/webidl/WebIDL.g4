@@ -328,8 +328,7 @@ argument
 ;
 
 optionalOrRequiredArgument
-	: 'optional' type argumentName default_
-	| type ellipsis argumentName
+	: 'optional'? type ellipsis argumentName default_
 ;
 
 argumentName
@@ -379,67 +378,14 @@ extendedAttributes
 ;
 
 extendedAttribute
-	: '(' extendedAttributeInner ')' extendedAttributeRest
-	| '[' extendedAttributeInner ']' extendedAttributeRest
-	| '{' extendedAttributeInner '}' extendedAttributeRest
-	| other extendedAttributeRest
-;
-
-extendedAttributeRest
-	: extendedAttribute
+	: extendedAttributeNamePart? IDENTIFIER_WEBIDL ('(' argumentList ')')?
+	| extendedAttributeNamePart? IDENTIFIER_WEBIDL? '(' argumentList ')'
+	| extendedAttributeNamePart? IDENTIFIER_WEBIDL? '(' identifierList ')'
 	| /* empty */
 ;
 
-extendedAttributeInner
-	: '(' extendedAttributeInner ')' extendedAttributeInner
-	| '[' extendedAttributeInner ']' extendedAttributeInner
-	| '{' extendedAttributeInner '}' extendedAttributeInner
-	| otherOrComma extendedAttributeInner
-	| /* empty */
-;
-
-other
-	: INTEGER_WEBIDL
-	| FLOAT_WEBIDL
-	| IDENTIFIER_WEBIDL
-	| STRING_WEBIDL
-	| OTHER_WEBIDL
-	| '-'
-	| '-Infinity'
-	| '.'
-	| '...'
-	| ':'
-	| ';'
-	| '<'
-	| '='
-	| '>'
-	| '?'
-	| 'ByteString'
-	| 'Date'
-	| 'DOMString'
-	| 'Infinity'
-	| 'NaN'
-	| 'RegExp'
-	| 'USVString'
-	| 'any'
-	| 'boolean'
-	| 'byte'
-	| 'double'
-	| 'false'
-	| 'float'
-	| 'long'
-	| 'null'
-	| 'object'
-	| 'octet'
-	| 'or'
-	| 'optional'
-	| 'sequence'
-	| 'short'
-	| 'true'
-	| 'unsigned'
-	| 'void'
-	| argumentNameKeyword
-	| bufferRelatedType
+extendedAttributeNamePart
+	: IDENTIFIER_WEBIDL '='
 ;
 
 argumentNameKeyword
@@ -467,11 +413,6 @@ argumentNameKeyword
 	| 'stringifier'
 	| 'typedef'
 	| 'unrestricted'
-;
-
-otherOrComma
-	: other
-	| ','
 ;
 
 type

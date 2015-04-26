@@ -33,7 +33,7 @@ import java.io.StringReader
 import java.net.URL
 import java.util.*
 
-data class ExtendedAttribute(val name : String?, val call : String, val arguments : List<String>)
+data class ExtendedAttribute(val name : String?, val call : String, val arguments : List<Attribute>)
 data class Operation(val name : String, val returnType : String, val parameters : List<Attribute>, val attributes : List<ExtendedAttribute>)
 data class Attribute(val name : String, val type : String, val readOnly : Boolean, val defaultValue : String? = null)
 data class Constant(val name : String, val type : String, val value : String?)
@@ -51,31 +51,56 @@ data class InterfaceDefinition(val name : String, val extendedAttributes: List<E
 data class ExtensionInterfaceDefinition(val name : String, val implements : String) : Definition
 data class EnumDefinition(val name : String) : Definition
 
+class ExtendedAttributeArgumentsParser : WebIDLBaseVisitor<List<Attribute>>() {
+    private val arguments = ArrayList<Attribute>()
+
+    override fun defaultResult(): List<Attribute> = arguments
+
+    override fun visitOptionalOrRequiredArgument(ctx: WebIDLParser.OptionalOrRequiredArgumentContext): List<Attribute> {
+        val attributeVisitor = AttributeVisitor(false, emptyList())
+        attributeVisitor.visit(ctx)
+        val parameter = attributeVisitor.visitChildren(ctx)
+
+        arguments.add(parameter)
+
+        visitChildren(ctx)
+        return defaultResult()
+    }
+}
+
 class ExtendedAttributeParser : WebIDLBaseVisitor<ExtendedAttribute>() {
     private var name : String? = null
     private var call : String = ""
-    private val arguments = ArrayList<String>()
+    private val arguments = ArrayList<Attribute>()
 
     override fun defaultResult(): ExtendedAttribute = ExtendedAttribute(name, call, arguments)
 
-    override fun visitOther(ctx: WebIDLParser.OtherContext): ExtendedAttribute {
-        visitChildren(ctx)
+    override fun visitExtendedAttribute(ctx: WebIDLParser.ExtendedAttributeContext): ExtendedAttribute {
+        call = ctx.children?.filter {it is TerminalNode && it.getSymbol().getType() == WebIDLLexer.IDENTIFIER_WEBIDL}?.firstOrNull()?.getText() ?: ""
 
-        val text = ctx.getText()
-        if (name == null && call == "") {
-            call = text
-        } else if (name == null) {
-            name = call
-            call = text
-        } else {
-            arguments.add(text)
-        }
+        visitChildren(ctx)
+        return defaultResult()
+    }
+
+    override fun visitArgumentList(ctx: WebIDLParser.ArgumentListContext): ExtendedAttribute {
+        arguments.addAll(ExtendedAttributeArgumentsParser().visitChildren(ctx))
+        return defaultResult()
+    }
+
+    override fun visitIdentifierList(ctx : IdentifierListContext) : ExtendedAttribute {
+        object : WebIDLBaseVisitor<Unit>() {
+            override fun visitTerminal(node : TerminalNode) {
+                if (node.getSymbol().getType() == WebIDLLexer.IDENTIFIER_WEBIDL) {
+                    arguments.add(Attribute(node.getText(), "any", true))
+                }
+            }
+        }.visitChildren(ctx)
 
         return defaultResult()
     }
 
-    override fun visitExtendedAttributeInner(ctx: WebIDLParser.ExtendedAttributeInnerContext): ExtendedAttribute {
-        visitChildren(ctx)
+    override fun visitExtendedAttributeNamePart(ctx: WebIDLParser.ExtendedAttributeNamePartContext): ExtendedAttribute {
+        name = getName(ctx)
         return defaultResult()
     }
 }
@@ -335,7 +360,7 @@ class DefinitionVisitor(val extendedAttributes: List<ExtendedAttribute>) : WebID
 
     override fun visitExtendedAttribute(ctx: ExtendedAttributeContext) : Definition {
         val att = with(ExtendedAttributeParser()) {
-            visitChildren(ctx)
+            visit(ctx)
         }
 
         memberAttributes.add(att)
@@ -365,7 +390,7 @@ fun parseIDL(reader : Reader) : Repository {
 
         override fun visitExtendedAttribute(ctx: ExtendedAttributeContext?) {
             val att = with(ExtendedAttributeParser()) {
-                visitChildren(ctx)
+                visit(ctx)
             }
 
             extendedAttributes.add(att)
