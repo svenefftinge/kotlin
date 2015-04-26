@@ -259,6 +259,12 @@ public class BlackBoxWithStdlibCodegenTestGenerated extends AbstractBlackBoxCode
             doTestWithStdlib(fileName);
         }
 
+        @TestMetadata("foldRange.kt")
+        public void testFoldRange() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("compiler/testData/codegen/boxWithStdlib/boxingOptimization/foldRange.kt");
+            doTestWithStdlib(fileName);
+        }
+
         @TestMetadata("kt5493.kt")
         public void testKt5493() throws Exception {
             String fileName = JetTestUtils.navigationMetadata("compiler/testData/codegen/boxWithStdlib/boxingOptimization/kt5493.kt");
@@ -304,6 +310,12 @@ public class BlackBoxWithStdlibCodegenTestGenerated extends AbstractBlackBoxCode
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             String fileName = JetTestUtils.navigationMetadata("compiler/testData/codegen/boxWithStdlib/boxingOptimization/simple.kt");
+            doTestWithStdlib(fileName);
+        }
+
+        @TestMetadata("simpleUninitializedMerge.kt")
+        public void testSimpleUninitializedMerge() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("compiler/testData/codegen/boxWithStdlib/boxingOptimization/simpleUninitializedMerge.kt");
             doTestWithStdlib(fileName);
         }
 

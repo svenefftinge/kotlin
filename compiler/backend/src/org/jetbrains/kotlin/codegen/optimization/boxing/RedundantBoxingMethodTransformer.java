@@ -112,6 +112,7 @@ public class RedundantBoxingMethodTransformer extends MethodTransformer {
             if (!Collections2.filter(usedValues, new Predicate<BasicValue>() {
                 @Override
                 public boolean apply(BasicValue input) {
+                    if (input == BasicValue.UNINITIALIZED_VALUE) return false;
                     return input == null ||
                            !(input instanceof BoxedBasicValue) ||
                            !((BoxedBasicValue) input).isSafeToRemove() ||

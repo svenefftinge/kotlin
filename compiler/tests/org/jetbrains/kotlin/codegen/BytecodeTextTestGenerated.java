@@ -241,6 +241,12 @@ public class BytecodeTextTestGenerated extends AbstractBytecodeTextTest {
             doTest(fileName);
         }
 
+        @TestMetadata("foldRange.kt")
+        public void testFoldRange() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("compiler/testData/codegen/bytecodeText/boxingOptimization/foldRange.kt");
+            doTest(fileName);
+        }
+
         @TestMetadata("nullCheck.kt")
         public void testNullCheck() throws Exception {
             String fileName = JetTestUtils.navigationMetadata("compiler/testData/codegen/bytecodeText/boxingOptimization/nullCheck.kt");
@@ -268,6 +274,12 @@ public class BytecodeTextTestGenerated extends AbstractBytecodeTextTest {
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             String fileName = JetTestUtils.navigationMetadata("compiler/testData/codegen/bytecodeText/boxingOptimization/simple.kt");
+            doTest(fileName);
+        }
+
+        @TestMetadata("simpleUninitializedMerge.kt")
+        public void testSimpleUninitializedMerge() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("compiler/testData/codegen/bytecodeText/boxingOptimization/simpleUninitializedMerge.kt");
             doTest(fileName);
         }
 
