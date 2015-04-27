@@ -419,7 +419,8 @@ fun merge(i1 : InterfaceDefinition, i2 : InterfaceDefinition) : InterfaceDefinit
             operations = i1.operations merge i2.operations,
             attributes = i1.attributes merge i2.attributes,
             superTypes = i1.superTypes merge i2.superTypes,
-            constants = i1.constants merge i2.constants
+            constants = i1.constants merge i2.constants,
+            dictionary = i1.dictionary || i2.dictionary
             )
 }
 
