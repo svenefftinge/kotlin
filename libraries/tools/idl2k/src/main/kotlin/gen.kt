@@ -74,14 +74,23 @@ private fun handleSpecialTypes(repository: Repository, type : String) : String {
 }
 
 fun <O: Appendable> O.generateInterface(repository : Repository, interface: InterfaceDefinition) {
-    val entityType = if (interface.dictionary || "Constructor" in interface.extendedAttributes.map {it.call}) "class" else "trait"
+    val constructor = interface.extendedAttributes.firstOrNull {it.call == "Constructor"}
+    val entityType = if (interface.dictionary || constructor != null) "class" else "trait"
+    val constructorPart = if (constructor != null && constructor.arguments.isNotEmpty()) "(${generateMethodParametersPart(repository, constructor.arguments)})" else ""
 
-    appendln("native ${entityType} ${interface.name}${if (interface.superTypes.isNotEmpty()) " : " else ""}${interface.superTypes.joinToString(", ")} {")
+    appendln("native ${entityType} ${interface.name}${constructorPart}${if (interface.superTypes.isNotEmpty()) " : " else ""}${interface.superTypes.joinToString(", ")} {")
 
     generateInterfaceBody(repository, interface)
 
     appendln("}")
     appendln()
+}
+
+private fun generateMethodParametersPart(repository: Repository, parameters : List<Attribute>): String {
+    fun vararg(p : Attribute) = if (p.name.endsWith("...")) "vararg " else ""
+    fun defaultValue(p : Attribute) = if (p.defaultValue != null && p.defaultValue != "")" = ${p.defaultValue}" else ""
+
+    return parameters.map { p -> "${vararg(p)}${p.name} : ${mapType(repository, p.type)}${defaultValue(p)}" }.joinToString(", ")
 }
 
 private fun <O: Appendable> O.generateInterfaceBody(repository: Repository, interface: InterfaceDefinition) {
@@ -100,8 +109,6 @@ private fun <O: Appendable> O.generateInterfaceBody(repository: Repository, inte
 
         val returnType = mapType(repository, it.returnType).let { type -> if (getter && !type.endsWith("?")) "$type?" else type }
 
-        fun vararg(p : Attribute) = if (p.name.endsWith("...")) "vararg " else ""
-
         if (it.name != "" || getter || setter) {
             if (getter) {
                 appendln("    nativeGetter")
@@ -110,13 +117,13 @@ private fun <O: Appendable> O.generateInterfaceBody(repository: Repository, inte
             }
 
             if (getter) {
-                appendln("    fun get(${it.parameters.map { p -> "${vararg(p)}${p.name} : ${mapType(repository, p.type)}" }.joinToString(", ")}) : ${returnType}")
+                appendln("    fun get(${generateMethodParametersPart(repository, it.parameters)}) : ${returnType}")
             }
             if (setter) {
-                appendln("    fun set(${it.parameters.map { p -> "${vararg(p)}${p.name} : ${mapType(repository, p.type)}" }.joinToString(", ")}) : ${returnType}")
+                appendln("    fun set(${generateMethodParametersPart(repository, it.parameters)}) : ${returnType}")
             }
             if (it.name != "") {
-                appendln("    fun ${it.name}(${it.parameters.map { p -> "${vararg(p)}${p.name} : ${mapType(repository, p.type)}" }.joinToString(", ")}) : ${returnType}")
+                appendln("    fun ${it.name}(${generateMethodParametersPart(repository, it.parameters)}) : ${returnType}")
             }
         }
     }

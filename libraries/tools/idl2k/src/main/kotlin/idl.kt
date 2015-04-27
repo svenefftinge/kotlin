@@ -173,8 +173,9 @@ class OperationVisitor(val attributes : List<ExtendedAttribute>) : WebIDLBaseVis
 class AttributeVisitor(val readOnly : Boolean, val attributes : List<ExtendedAttribute>) : WebIDLBaseVisitor<Attribute>() {
     var type : String = ""
     var name : String = ""
+    var defaultValue : String? = null
 
-    override fun defaultResult() : Attribute = Attribute(name, type, readOnly)
+    override fun defaultResult() : Attribute = Attribute(name, type, readOnly, defaultValue)
 
     override fun visitType(ctx: WebIDLParser.TypeContext): Attribute {
         type = TypeVisitor().visit(ctx)
@@ -196,6 +197,11 @@ class AttributeVisitor(val readOnly : Boolean, val attributes : List<ExtendedAtt
         } catch (ignore : Throwable) {
             name = ctx.getText()
         }
+        return defaultResult()
+    }
+
+    override fun visitDefaultValue(ctx: WebIDLParser.DefaultValueContext): Attribute {
+        defaultValue = ctx.getText()
         return defaultResult()
     }
 }
