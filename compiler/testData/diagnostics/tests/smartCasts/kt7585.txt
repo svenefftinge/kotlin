@@ -1,0 +1,67 @@
+package
+
+internal fun foo(): kotlin.String
+internal fun </*0*/ T> pairOf(/*0*/ vararg values: T /*kotlin.Array<out T>*/): Pair<T>
+
+internal open class A : Z {
+    public constructor A()
+    internal open override /*1*/ fun doIt(): kotlin.Unit
+    public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+}
+
+internal final class E : Z {
+    public constructor E()
+    internal open override /*1*/ fun doIt(): kotlin.Unit
+    public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+}
+
+internal final class MyWrapper : Wrapper<A> {
+    public constructor MyWrapper(/*0*/ a: A)
+    protected final override /*1*/ /*fake_override*/ val t: A
+    internal final override /*1*/ /*fake_override*/ fun doIt(): kotlin.Unit
+    public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+}
+
+kotlin.data() internal final class Pair</*0*/ out T> {
+    public constructor Pair</*0*/ out T>(/*0*/ a: T, /*1*/ b: T)
+    internal final val a: T
+    internal final val b: T
+    internal final /*synthesized*/ fun component1(): T
+    internal final /*synthesized*/ fun component2(): T
+    public final /*synthesized*/ fun copy(/*0*/ a: T = ..., /*1*/ b: T = ...): Pair<T>
+    internal final fun doIt(): kotlin.Unit
+    public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+}
+
+internal final class TheirWrapper : Wrapper<E> {
+    public constructor TheirWrapper(/*0*/ e: E)
+    protected final override /*1*/ /*fake_override*/ val t: E
+    internal final override /*1*/ /*fake_override*/ fun doIt(): kotlin.Unit
+    public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+}
+
+internal abstract class Wrapper</*0*/ T : A> {
+    public constructor Wrapper</*0*/ T : A>(/*0*/ t: T)
+    protected final val t: T
+    internal final fun doIt(): kotlin.Unit
+    public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+}
+
+internal trait Z {
+    internal abstract fun doIt(): kotlin.Unit
+    public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+}
