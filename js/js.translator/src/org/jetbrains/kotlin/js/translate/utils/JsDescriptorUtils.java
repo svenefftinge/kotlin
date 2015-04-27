@@ -28,7 +28,6 @@ import org.jetbrains.kotlin.js.descriptorUtils.DescriptorUtilsPackage;
 import org.jetbrains.kotlin.js.translate.context.TranslationContext;
 import org.jetbrains.kotlin.name.Name;
 import org.jetbrains.kotlin.psi.JetExpression;
-import org.jetbrains.kotlin.resolve.BindingContext;
 import org.jetbrains.kotlin.resolve.DescriptorUtils;
 import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue;
 import org.jetbrains.kotlin.resolve.scopes.receivers.ThisReceiver;
@@ -89,7 +88,7 @@ public final class JsDescriptorUtils {
                 ClassDescriptor classDescriptor = getClassDescriptorForType(type);
 
                 return !FAKE_CLASSES.contains(getFqNameSafe(classDescriptor).asString()) &&
-                       !(classDescriptor.getKind() == ClassKind.TRAIT && isNativeObject(classDescriptor));
+                       !(classDescriptor.getKind() == ClassKind.INTERFACE && isNativeObject(classDescriptor));
             }
         });
     }

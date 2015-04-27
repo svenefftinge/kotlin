@@ -20,7 +20,6 @@ import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Lists;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -436,7 +435,7 @@ public class JetPsiUtil {
     }
 
     public static boolean isTrait(@NotNull JetClassOrObject classOrObject) {
-        return classOrObject instanceof JetClass && ((JetClass) classOrObject).isTrait();
+        return classOrObject instanceof JetClass && ((JetClass) classOrObject).isInterface();
     }
 
     @Nullable

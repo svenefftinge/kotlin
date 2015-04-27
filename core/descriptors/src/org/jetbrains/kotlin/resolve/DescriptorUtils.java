@@ -296,7 +296,7 @@ public class DescriptorUtils {
     }
 
     public static boolean isTrait(@Nullable DeclarationDescriptor descriptor) {
-        return isKindOf(descriptor, ClassKind.TRAIT);
+        return isKindOf(descriptor, ClassKind.INTERFACE);
     }
 
     public static boolean isClass(@Nullable DeclarationDescriptor descriptor) {
@@ -325,7 +325,7 @@ public class DescriptorUtils {
         Collection<JetType> superclassTypes = classDescriptor.getTypeConstructor().getSupertypes();
         for (JetType type : superclassTypes) {
             ClassDescriptor superClassDescriptor = getClassDescriptorForType(type);
-            if (superClassDescriptor.getKind() != ClassKind.TRAIT) {
+            if (superClassDescriptor.getKind() != ClassKind.INTERFACE) {
                 return type;
             }
         }
@@ -358,7 +358,7 @@ public class DescriptorUtils {
         if (isAnonymousObject(classDescriptor)) {
             return Visibilities.INTERNAL;
         }
-        assert classKind == ClassKind.CLASS || classKind == ClassKind.TRAIT || classKind == ClassKind.ANNOTATION_CLASS;
+        assert classKind == ClassKind.CLASS || classKind == ClassKind.INTERFACE || classKind == ClassKind.ANNOTATION_CLASS;
         return Visibilities.PUBLIC;
     }
 
