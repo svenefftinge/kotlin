@@ -74,7 +74,8 @@ public class CandidateResolver {
 
     public <D extends CallableDescriptor, F extends D> void performResolutionForCandidateCall(
             @NotNull CallCandidateResolutionContext<D> context,
-            @NotNull ResolutionTask<D, F> task) {
+            @NotNull ResolutionTask<D, F> task,
+            boolean recordSmartCastImpossible) {
 
         ProgressIndicatorProvider.checkCanceled();
 
@@ -165,7 +166,7 @@ public class CandidateResolver {
             candidateCall.addStatus(inferTypeArguments(context));
         }
         else {
-            candidateCall.addStatus(checkAllValueArguments(context, SHAPE_FUNCTION_ARGUMENTS).status);
+            candidateCall.addStatus(checkAllValueArguments(context, SHAPE_FUNCTION_ARGUMENTS, recordSmartCastImpossible).status);
         }
 
         checkAbstractAndSuper(context);
@@ -458,8 +459,9 @@ public class CandidateResolver {
     @NotNull
     private <D extends CallableDescriptor> ValueArgumentsCheckingResult checkAllValueArguments(
             @NotNull CallCandidateResolutionContext<D> context,
-            @NotNull CallResolverUtil.ResolveArgumentsMode resolveFunctionArgumentBodies) {
-        return checkAllValueArguments(context, context.candidateCall.getTrace(), resolveFunctionArgumentBodies);
+            @NotNull CallResolverUtil.ResolveArgumentsMode resolveFunctionArgumentBodies,
+            boolean recordSmartCastImpossible) {
+        return checkAllValueArguments(context, context.candidateCall.getTrace(), resolveFunctionArgumentBodies, recordSmartCastImpossible);
     }
 
     @NotNull
@@ -468,17 +470,28 @@ public class CandidateResolver {
             @NotNull BindingTrace trace,
             @NotNull CallResolverUtil.ResolveArgumentsMode resolveFunctionArgumentBodies
     ) {
+        return checkAllValueArguments(context, trace, resolveFunctionArgumentBodies, true);
+    }
+
+    @NotNull
+    public <D extends CallableDescriptor> ValueArgumentsCheckingResult checkAllValueArguments(
+            @NotNull CallCandidateResolutionContext<D> context,
+            @NotNull BindingTrace trace,
+            @NotNull CallResolverUtil.ResolveArgumentsMode resolveFunctionArgumentBodies,
+            boolean recordSmartCastImpossible
+    ) {
         ValueArgumentsCheckingResult checkingResult = checkValueArgumentTypes(
                 context, context.candidateCall, trace, resolveFunctionArgumentBodies);
         ResolutionStatus resultStatus = checkingResult.status;
-        resultStatus = resultStatus.combine(checkReceivers(context, trace));
+        resultStatus = resultStatus.combine(checkReceivers(context, trace, recordSmartCastImpossible));
 
         return new ValueArgumentsCheckingResult(resultStatus, checkingResult.argumentTypes);
     }
 
     private static <D extends CallableDescriptor> ResolutionStatus checkReceivers(
             @NotNull CallCandidateResolutionContext<D> context,
-            @NotNull BindingTrace trace
+            @NotNull BindingTrace trace,
+            boolean recordSmartCastImpossible
     ) {
         ResolutionStatus resultStatus = SUCCESS;
         ResolvedCall<D> candidateCall = context.candidateCall;
@@ -493,14 +506,16 @@ public class CandidateResolver {
         resultStatus = resultStatus.combine(checkReceiver(
                 context, candidateCall, trace,
                 candidateCall.getResultingDescriptor().getExtensionReceiverParameter(),
-                candidateCall.getExtensionReceiver(), candidateCall.getExplicitReceiverKind().isExtensionReceiver(), false));
+                candidateCall.getExtensionReceiver(), candidateCall.getExplicitReceiverKind().isExtensionReceiver(),
+                false, recordSmartCastImpossible));
 
         resultStatus = resultStatus.combine(checkReceiver(
                 context, candidateCall, trace,
                 candidateCall.getResultingDescriptor().getDispatchReceiverParameter(), candidateCall.getDispatchReceiver(),
                 candidateCall.getExplicitReceiverKind().isDispatchReceiver(),
                 // for the invocation 'foo(1)' where foo is a variable of function type we should mark 'foo' if there is unsafe call error
-                context.call instanceof CallForImplicitInvoke));
+                context.call instanceof CallForImplicitInvoke,
+                recordSmartCastImpossible));
         return resultStatus;
     }
 
@@ -640,7 +655,8 @@ public class CandidateResolver {
             @Nullable ReceiverParameterDescriptor receiverParameter,
             @NotNull ReceiverValue receiverArgument,
             boolean isExplicitReceiver,
-            boolean implicitInvokeCheck
+            boolean implicitInvokeCheck,
+            boolean recordSmartCastImpossible
     ) {
         if (receiverParameter == null || !receiverArgument.exists()) return SUCCESS;
         D candidateDescriptor = candidateCall.getCandidateDescriptor();
@@ -653,7 +669,7 @@ public class CandidateResolver {
             context.tracing.wrongReceiverType(trace, receiverParameter, receiverArgument);
             return OTHER_ERROR;
         }
-        SmartCastUtils.recordSmartCastIfNecessary(receiverArgument, receiverParameter.getType(), context, safeAccess);
+        SmartCastUtils.recordSmartCastIfNecessary(receiverArgument, receiverParameter.getType(), context, safeAccess, recordSmartCastImpossible);
 
         JetType receiverArgumentType = receiverArgument.getType();
 
