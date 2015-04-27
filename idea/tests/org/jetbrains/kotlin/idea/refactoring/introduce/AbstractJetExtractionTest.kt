@@ -225,7 +225,7 @@ public abstract class AbstractJetExtractionTest() : JetLightCodeInsightFixtureTe
 
         val addKotlinRuntime = InTextDirectivesUtils.findStringWithPrefixes(file.getText(), "// WITH_RUNTIME") != null
         if (addKotlinRuntime) {
-            ConfigLibraryUtil.configureKotlinRuntimeAndSdk(myModule, PluginTestCaseBase.mockJdk())
+            ConfigLibraryUtil.configureKotlinRuntime(myModule)
         }
 
         try {
@@ -240,7 +240,7 @@ public abstract class AbstractJetExtractionTest() : JetLightCodeInsightFixtureTe
         }
         finally {
             if (addKotlinRuntime) {
-                ConfigLibraryUtil.unConfigureKotlinRuntimeAndSdk(myModule, PluginTestCaseBase.mockJdk())
+                ConfigLibraryUtil.unConfigureKotlinRuntime(myModule)
             }
         }
     }

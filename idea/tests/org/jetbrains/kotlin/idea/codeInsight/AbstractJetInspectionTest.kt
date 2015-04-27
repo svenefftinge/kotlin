@@ -67,11 +67,12 @@ public abstract class AbstractJetInspectionTest: LightCodeInsightFixtureTestCase
             val fullJdk = psiFiles.any { InTextDirectivesUtils.findStringWithPrefixes(it.getText(), "// FULL_JDK") != null }
 
             try {
+                if (fullJdk) {
+                    ConfigLibraryUtil.configureSdk(myFixture.getModule(), PluginTestCaseBase.fullJdk())
+                }
+
                 if (isWithRuntime) {
-                    ConfigLibraryUtil.configureKotlinRuntimeAndSdk(
-                            myFixture.getModule(),
-                            if (fullJdk) PluginTestCaseBase.fullJdk() else PluginTestCaseBase.mockJdk()
-                    )
+                    ConfigLibraryUtil.configureKotlinRuntime(myFixture.getModule())
                 }
 
                 val scope = AnalysisScope(getProject(), psiFiles.map { it.getVirtualFile()!! })
@@ -84,8 +85,12 @@ public abstract class AbstractJetInspectionTest: LightCodeInsightFixtureTestCase
                 InspectionTestUtil.compareToolResults(globalContext, toolWrapper, false, inspectionsTestDir.getPath())
             }
             finally {
+                if (fullJdk) {
+                    ConfigLibraryUtil.configureSdk(myFixture.getModule(), getProjectDescriptor().getSdk())
+                }
+
                 if (isWithRuntime) {
-                    ConfigLibraryUtil.unConfigureKotlinRuntimeAndSdk(myFixture.getModule(), IdeaTestUtil.getMockJdk17())
+                    ConfigLibraryUtil.unConfigureKotlinRuntime(myFixture.getModule())
                 }
             }
         }

@@ -45,8 +45,6 @@ import org.jetbrains.kotlin.psi.JetNamedDeclaration
 import org.jetbrains.kotlin.psi.JetTreeVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
-import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil.configureKotlinJsRuntimeAndSdk
-import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil.configureKotlinRuntimeAndSdk
 import org.junit.Assert
 import java.io.File
 import java.util.ArrayList
@@ -90,19 +88,19 @@ class RunConfigurationTest: CodeInsightTestCase() {
     }
 
     fun testClassesAndObjects() {
-        doTest(ConfigLibraryUtil::configureKotlinRuntimeAndSdk)
+        doTest(ConfigLibraryUtil::configureKotlinRuntime, ConfigLibraryUtil::unConfigureKotlinRuntime)
     }
 
     fun testInJsModule() {
-        doTest(ConfigLibraryUtil::configureKotlinJsRuntimeAndSdk)
+        doTest(ConfigLibraryUtil::configureKotlinJsRuntime, ConfigLibraryUtil::unConfigureKotlinJsRuntime)
     }
 
-    private fun doTest(configureRuntime: (Module, Sdk) -> Unit) {
+    private fun doTest(configureRuntime: (Module) -> Unit, unConfigureRuntime: (Module) -> Unit) {
         val baseDir = getTestProject().getBaseDir()!!
         val createModuleResult = configureModule(moduleDirPath("module"), baseDir)
         val srcDir = createModuleResult.srcDir
 
-        configureRuntime(createModuleResult.module, PluginTestCaseBase.mockJdk())
+        configureRuntime(createModuleResult.module)
 
         try {
             val expectedClasses = ArrayList<String>()
@@ -132,7 +130,7 @@ class RunConfigurationTest: CodeInsightTestCase() {
             Assert.assertEquals(expectedClasses, actualClasses)
         }
         finally {
-            ConfigLibraryUtil.unConfigureKotlinRuntimeAndSdk(createModuleResult.module, PluginTestCaseBase.mockJdk())
+            unConfigureRuntime(createModuleResult.module)
         }
     }
 
