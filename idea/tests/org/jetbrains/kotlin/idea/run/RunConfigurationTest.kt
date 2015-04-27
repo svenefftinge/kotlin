@@ -45,8 +45,8 @@ import org.jetbrains.kotlin.psi.JetNamedDeclaration
 import org.jetbrains.kotlin.psi.JetTreeVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
-import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil.configureKotlinJsRuntime
-import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil.configureKotlinRuntime
+import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil.configureKotlinJsRuntimeAndSdk
+import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil.configureKotlinRuntimeAndSdk
 import org.junit.Assert
 import java.io.File
 import java.util.ArrayList
@@ -90,11 +90,11 @@ class RunConfigurationTest: CodeInsightTestCase() {
     }
 
     fun testClassesAndObjects() {
-        doTest(ConfigLibraryUtil::configureKotlinRuntime)
+        doTest(ConfigLibraryUtil::configureKotlinRuntimeAndSdk)
     }
 
     fun testInJsModule() {
-        doTest(ConfigLibraryUtil::configureKotlinJsRuntime)
+        doTest(ConfigLibraryUtil::configureKotlinJsRuntimeAndSdk)
     }
 
     private fun doTest(configureRuntime: (Module, Sdk) -> Unit) {
@@ -132,7 +132,7 @@ class RunConfigurationTest: CodeInsightTestCase() {
             Assert.assertEquals(expectedClasses, actualClasses)
         }
         finally {
-            ConfigLibraryUtil.unConfigureKotlinRuntime(createModuleResult.module, PluginTestCaseBase.mockJdk())
+            ConfigLibraryUtil.unConfigureKotlinRuntimeAndSdk(createModuleResult.module, PluginTestCaseBase.mockJdk())
         }
     }
 
