@@ -35,6 +35,7 @@ import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall;
 import org.jetbrains.kotlin.resolve.calls.results.OverloadResolutionResults;
 import org.jetbrains.kotlin.resolve.calls.results.OverloadResolutionResultsImpl;
 import org.jetbrains.kotlin.resolve.calls.results.ResolutionResultsHandler;
+import org.jetbrains.kotlin.resolve.calls.results.ResolutionStatus;
 import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowInfo;
 import org.jetbrains.kotlin.resolve.calls.tasks.*;
 import org.jetbrains.kotlin.resolve.calls.tasks.collectors.CallableDescriptorCollectors;
@@ -603,6 +604,7 @@ public class CallResolver {
             @NotNull ResolutionTask<D, F> task,
             @NotNull CallTransformer<D, F> callTransformer
     ) {
+        boolean wasSuccess = false;
 
         for (ResolutionCandidate<D> resolutionCandidate : task.getCandidates()) {
             TemporaryBindingTrace candidateTrace = TemporaryBindingTrace.create(
@@ -610,7 +612,8 @@ public class CallResolver {
             Collection<CallCandidateResolutionContext<D>> contexts = callTransformer.createCallContexts(resolutionCandidate, task, candidateTrace);
             for (CallCandidateResolutionContext<D> context : contexts) {
 
-                candidateResolver.performResolutionForCandidateCall(context, task);
+                candidateResolver.performResolutionForCandidateCall(context, task, !wasSuccess);
+                if (context.candidateCall.getStatus() == ResolutionStatus.SUCCESS) wasSuccess = true;
 
                 /* important for 'variable as function case': temporary bind reference to descriptor (will be rewritten)
                 to have a binding to variable while 'invoke' call resolve */

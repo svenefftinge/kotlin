@@ -190,7 +190,7 @@ public class DataFlowUtils {
 
         for (JetType possibleType : c.dataFlowInfo.getPossibleTypes(dataFlowValue)) {
             if (JetTypeChecker.DEFAULT.isSubtypeOf(possibleType, c.expectedType)) {
-                SmartCastUtils.recordCastOrError(expression, possibleType, c.trace, dataFlowValue.isPredictable(), false);
+                SmartCastUtils.recordCastOrError(expression, possibleType, c.trace, dataFlowValue.isPredictable(), false, true);
                 return possibleType;
             }
         }

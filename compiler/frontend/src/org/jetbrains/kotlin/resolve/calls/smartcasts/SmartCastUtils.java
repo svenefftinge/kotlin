@@ -162,7 +162,8 @@ public class SmartCastUtils {
             @NotNull ReceiverValue receiver,
             @NotNull JetType receiverParameterType,
             @NotNull ResolutionContext context,
-            boolean safeAccess
+            boolean safeAccess,
+            boolean recordSmartCastImpossible
     ) {
         if (!(receiver instanceof ExpressionReceiver)) return false;
 
@@ -178,7 +179,7 @@ public class SmartCastUtils {
         JetExpression expression = ((ExpressionReceiver) receiver).getExpression();
         DataFlowValue dataFlowValue = DataFlowValueFactory.createDataFlowValue(receiver, context);
 
-        recordCastOrError(expression, smartCastSubType, context.trace, dataFlowValue.isPredictable(), true);
+        recordCastOrError(expression, smartCastSubType, context.trace, dataFlowValue.isPredictable(), true, recordSmartCastImpossible);
         return true;
     }
 
@@ -187,7 +188,8 @@ public class SmartCastUtils {
             @NotNull JetType type,
             @NotNull BindingTrace trace,
             boolean canBeCast,
-            boolean recordExpressionType
+            boolean recordExpressionType,
+            boolean reportSmartCastImpossible
     ) {
         if (canBeCast) {
             trace.record(SMARTCAST, expression, type);
@@ -197,7 +199,7 @@ public class SmartCastUtils {
                 trace.recordType(expression, type);
             }
         }
-        else {
+        else if (reportSmartCastImpossible) {
             trace.report(SMARTCAST_IMPOSSIBLE.on(expression, type, expression.getText()));
         }
     }
