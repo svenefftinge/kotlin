@@ -122,7 +122,7 @@ public class AddFunctionParametersFix extends ChangeFunctionSignatureFix {
         return new JetChangeSignatureConfiguration() {
             @NotNull
             @Override
-            public JetMethodDescriptor configure(@NotNull JetMethodDescriptor originalDescriptor, @NotNull final BindingContext bindingContext) {
+            public JetMethodDescriptor configure(@NotNull final JetMethodDescriptor originalDescriptor, @NotNull final BindingContext bindingContext) {
                 return ChangeSignaturePackage.modify(
                         originalDescriptor,
                         new ExtensionFunction0<JetMutableMethodDescriptor, Unit>() {
@@ -147,11 +147,12 @@ public class AddFunctionParametersFix extends ChangeFunctionSignatureFix {
                                         }
                                     }
                                     else {
-                                        JetParameterInfo parameterInfo = getNewParameterInfo(bindingContext, argument, validator);
+                                        JetParameterInfo parameterInfo =
+                                                getNewParameterInfo(originalDescriptor.getBaseDescriptor(), bindingContext, argument, validator);
                                         typesToShorten.add(parameterInfo.getOriginalType());
 
                                         if (expression != null) {
-                                            parameterInfo.setDefaultValueForCall(expression.getText());
+                                            parameterInfo.setDefaultValueForCall(expression);
                                         }
 
                                         descriptor.addParameter(parameterInfo);

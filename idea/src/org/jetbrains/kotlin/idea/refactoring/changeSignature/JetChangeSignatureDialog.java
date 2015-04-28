@@ -54,6 +54,8 @@ import org.jetbrains.kotlin.descriptors.Visibilities;
 import org.jetbrains.kotlin.descriptors.Visibility;
 import org.jetbrains.kotlin.idea.JetFileType;
 import org.jetbrains.kotlin.idea.refactoring.JetRefactoringBundle;
+import org.jetbrains.kotlin.psi.JetExpression;
+import org.jetbrains.kotlin.psi.JetExpressionCodeFragment;
 import org.jetbrains.kotlin.psi.JetTypeCodeFragment;
 import org.jetbrains.kotlin.types.JetType;
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.JetMethodDescriptor.Kind;
@@ -96,9 +98,9 @@ public class JetChangeSignatureDialog extends ChangeSignatureDialogBase<
             case FUNCTION:
                 return new JetFunctionParameterTableModel(descriptor, myDefaultValueContext);
             case PRIMARY_CONSTRUCTOR:
-                return new JetPrimaryConstructorParameterTableModel(myDefaultValueContext);
+                return new JetPrimaryConstructorParameterTableModel(descriptor, myDefaultValueContext);
             case SECONDARY_CONSTRUCTOR:
-                return new JetSecondaryConstructorParameterTableModel(myDefaultValueContext);
+                return new JetSecondaryConstructorParameterTableModel(descriptor, myDefaultValueContext);
         }
         throw new AssertionError("Invalid kind: " + descriptor.getKind());
     }
@@ -456,7 +458,12 @@ public class JetChangeSignatureDialog extends ChangeSignatureDialogBase<
         for (int i = 0; i < parameters.size(); i++) {
             JetParameterInfo parameter = parameters.get(i);
             parameter.setCurrentTypeText(myParametersTableModel.getItems().get(i).typeCodeFragment.getText().trim());
-            parameter.setDefaultValueForCall(myParametersTableModel.getItems().get(i).defaultValueCodeFragment.getText().trim());
+            JetExpressionCodeFragment codeFragment =
+                    (JetExpressionCodeFragment) myParametersTableModel.getItems().get(i).defaultValueCodeFragment;
+            JetExpression oldDefaultValue = parameter.getDefaultValueForCall();
+            if (!codeFragment.getText().equals(oldDefaultValue != null ? oldDefaultValue.getText() : "")) {
+                parameter.setDefaultValueForCall(codeFragment.getContentElement());
+            }
         }
 
         String returnTypeText = myReturnTypeCodeFragment != null ? myReturnTypeCodeFragment.getText().trim() : "";

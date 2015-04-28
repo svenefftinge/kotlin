@@ -16,29 +16,84 @@
 
 package org.jetbrains.kotlin.idea.refactoring.changeSignature
 
-import com.intellij.lang.ASTNode
-import com.intellij.refactoring.changeSignature.ParameterInfo
-import org.jetbrains.kotlin.psi.JetExpression
-import org.jetbrains.kotlin.types.JetType
-import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
-import org.jetbrains.kotlin.idea.refactoring.changeSignature.usages.JetFunctionDefinitionUsage
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiReference
+import com.intellij.refactoring.changeSignature.ParameterInfo
+import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.usages.JetFunctionDefinitionUsage
+import org.jetbrains.kotlin.idea.references.JetReference
+import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
-import org.jetbrains.kotlin.psi.JetParameter
-import org.jetbrains.kotlin.psi.JetModifierList
+import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.resolve.scopes.receivers.ThisReceiver
+import org.jetbrains.kotlin.types.JetType
+import java.util.LinkedHashMap
 
 public class JetParameterInfo(
+        val functionDescriptor: FunctionDescriptor,
         val originalIndex: Int = -1,
         private var name: String,
         type: JetType? = null,
         var defaultValueForParameter: JetExpression? = null,
-        var defaultValueForCall: String = "",
+        var defaultValueForCall: JetExpression? = null,
         var valOrVar: JetValVar = JetValVar.None,
         val modifierList: JetModifierList? = null
 ): ParameterInfo {
     val originalType: JetType? = type
     var currentTypeText: String = getOldTypeText()
+
+    public val defaultValueParameterReferences: Map<PsiReference, DeclarationDescriptor>
+
+    init {
+        val file = defaultValueForCall?.getContainingFile() as? JetFile
+        defaultValueParameterReferences =
+                if (defaultValueForCall != null && file != null && (file.isPhysical() || file.analysisContext != null)) {
+                    val map = LinkedHashMap<PsiReference, DeclarationDescriptor>()
+
+                    defaultValueForCall!!.accept(
+                            object : JetTreeVisitorVoid() {
+                                private fun getRelevantDescriptor(
+                                        expression: JetSimpleNameExpression,
+                                        ref: JetReference
+                                ): DeclarationDescriptor? {
+                                    val context = expression.analyze(BodyResolveMode.PARTIAL)
+
+                                    val descriptor = ref.resolveToDescriptors(context).singleOrNull()
+                                    if (descriptor is ValueParameterDescriptor) return descriptor
+
+                                    if (descriptor is PropertyDescriptor && functionDescriptor is ConstructorDescriptor) {
+                                        val parameter = DescriptorToSourceUtils.getSourceFromDescriptor(descriptor) as? JetParameter
+                                        return parameter?.let { context[BindingContext.VALUE_PARAMETER, it] }
+                                    }
+
+                                    val resolvedCall = expression.getResolvedCall(context) ?: return null
+                                    (resolvedCall.getResultingDescriptor() as? ReceiverParameterDescriptor)?.let { return it }
+
+                                    (resolvedCall.getExtensionReceiver() as? ThisReceiver)?.let { return it.getDeclarationDescriptor()  }
+                                    (resolvedCall.getDispatchReceiver() as? ThisReceiver)?.let { return it.getDeclarationDescriptor()  }
+
+                                    return null
+                                }
+
+                                override fun visitSimpleNameExpression(expression: JetSimpleNameExpression) {
+                                    val ref = expression.getReference() as? JetReference ?: return
+                                    val descriptor = getRelevantDescriptor(expression, ref) ?: return
+                                    map[ref] = descriptor
+                                }
+                            }
+                    )
+
+                    map
+                }
+                else {
+                    emptyMap()
+                }
+    }
 
     private fun getOldTypeText() = originalType?.let { IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_IN_TYPES.renderType(it) } ?: ""
 

@@ -2284,6 +2284,12 @@ public class JetExtractionTestGenerated extends AbstractJetExtractionTest {
             doIntroduceSimpleParameterTest(fileName);
         }
 
+        @TestMetadata("defaultValueNoTempVar.kt")
+        public void testDefaultValueNoTempVar() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("idea/testData/refactoring/introduceParameter/defaultValueNoTempVar.kt");
+            doIntroduceSimpleParameterTest(fileName);
+        }
+
         @TestMetadata("forbiddenUsages.kt")
         public void testForbiddenUsages() throws Exception {
             String fileName = JetTestUtils.navigationMetadata("idea/testData/refactoring/introduceParameter/forbiddenUsages.kt");
@@ -2344,6 +2350,12 @@ public class JetExtractionTestGenerated extends AbstractJetExtractionTest {
             doIntroduceSimpleParameterTest(fileName);
         }
 
+        @TestMetadata("partialSubstitution.kt")
+        public void testPartialSubstitution() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("idea/testData/refactoring/introduceParameter/partialSubstitution.kt");
+            doIntroduceSimpleParameterTest(fileName);
+        }
+
         @TestMetadata("propertyAccessor.kt")
         public void testPropertyAccessor() throws Exception {
             String fileName = JetTestUtils.navigationMetadata("idea/testData/refactoring/introduceParameter/propertyAccessor.kt");
@@ -2362,6 +2374,66 @@ public class JetExtractionTestGenerated extends AbstractJetExtractionTest {
             doIntroduceSimpleParameterTest(fileName);
         }
 
+        @TestMetadata("substituteBinaryExpressions.kt")
+        public void testSubstituteBinaryExpressions() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("idea/testData/refactoring/introduceParameter/substituteBinaryExpressions.kt");
+            doIntroduceSimpleParameterTest(fileName);
+        }
+
+        @TestMetadata("substituteCallExpressions.kt")
+        public void testSubstituteCallExpressions() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("idea/testData/refactoring/introduceParameter/substituteCallExpressions.kt");
+            doIntroduceSimpleParameterTest(fileName);
+        }
+
+        @TestMetadata("substituteDelegationCallsNoTempVar.kt")
+        public void testSubstituteDelegationCallsNoTempVar() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("idea/testData/refactoring/introduceParameter/substituteDelegationCallsNoTempVar.kt");
+            doIntroduceSimpleParameterTest(fileName);
+        }
+
+        @TestMetadata("substituteDoubleReceiver.kt")
+        public void testSubstituteDoubleReceiver() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("idea/testData/refactoring/introduceParameter/substituteDoubleReceiver.kt");
+            doIntroduceSimpleParameterTest(fileName);
+        }
+
+        @TestMetadata("substituteExplicitThisInMember.kt")
+        public void testSubstituteExplicitThisInMember() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("idea/testData/refactoring/introduceParameter/substituteExplicitThisInMember.kt");
+            doIntroduceSimpleParameterTest(fileName);
+        }
+
+        @TestMetadata("substituteImplicitThisInMember.kt")
+        public void testSubstituteImplicitThisInMember() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("idea/testData/refactoring/introduceParameter/substituteImplicitThisInMember.kt");
+            doIntroduceSimpleParameterTest(fileName);
+        }
+
+        @TestMetadata("substituteInPrimaryConstructorCall.kt")
+        public void testSubstituteInPrimaryConstructorCall() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("idea/testData/refactoring/introduceParameter/substituteInPrimaryConstructorCall.kt");
+            doIntroduceSimpleParameterTest(fileName);
+        }
+
+        @TestMetadata("substituteInSecondaryConstructorCall.kt")
+        public void testSubstituteInSecondaryConstructorCall() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("idea/testData/refactoring/introduceParameter/substituteInSecondaryConstructorCall.kt");
+            doIntroduceSimpleParameterTest(fileName);
+        }
+
+        @TestMetadata("substituteIncrement.kt")
+        public void testSubstituteIncrement() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("idea/testData/refactoring/introduceParameter/substituteIncrement.kt");
+            doIntroduceSimpleParameterTest(fileName);
+        }
+
+        @TestMetadata("substituteInfixCall.kt")
+        public void testSubstituteInfixCall() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("idea/testData/refactoring/introduceParameter/substituteInfixCall.kt");
+            doIntroduceSimpleParameterTest(fileName);
+        }
+
         @TestMetadata("throw.kt")
         public void testThrow() throws Exception {
             String fileName = JetTestUtils.navigationMetadata("idea/testData/refactoring/introduceParameter/throw.kt");
@@ -2377,6 +2449,12 @@ public class JetExtractionTestGenerated extends AbstractJetExtractionTest {
         @TestMetadata("valueAtCallSiteMultipleUsages.kt")
         public void testValueAtCallSiteMultipleUsages() throws Exception {
             String fileName = JetTestUtils.navigationMetadata("idea/testData/refactoring/introduceParameter/valueAtCallSiteMultipleUsages.kt");
+            doIntroduceSimpleParameterTest(fileName);
+        }
+
+        @TestMetadata("varargs.kt")
+        public void testVarargs() throws Exception {
+            String fileName = JetTestUtils.navigationMetadata("idea/testData/refactoring/introduceParameter/varargs.kt");
             doIntroduceSimpleParameterTest(fileName);
         }
 
