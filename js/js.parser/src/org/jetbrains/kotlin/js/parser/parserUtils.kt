@@ -16,28 +16,31 @@
 
 package org.jetbrains.kotlin.js.parser
 
-import com.google.dart.compiler.common.*
-import com.google.dart.compiler.backend.js.ast.*
-import com.google.gwt.dev.js.*
+import com.google.dart.compiler.backend.js.ast.JsFunction
+import com.google.dart.compiler.backend.js.ast.JsFunctionScope
+import com.google.dart.compiler.backend.js.ast.JsScope
+import com.google.dart.compiler.backend.js.ast.JsStatement
+import com.google.dart.compiler.common.SourceInfoImpl
+import com.google.gwt.dev.js.JsAstMapper
 import com.google.gwt.dev.js.rhino.*
-
-import com.intellij.util.*
-import java.io.*
-import java.util.*
+import java.io.Reader
+import java.io.StringReader
+import java.util.Observable
+import java.util.Observer
 
 private val FAKE_SOURCE_INFO = SourceInfoImpl(null, 0, 0, 0, 0)
 
 public fun parse(code: String, reporter: ErrorReporter, scope: JsScope): List<JsStatement> {
         val insideFunction = scope is JsFunctionScope
-        val node = parse(code, 0, reporter, insideFunction, Parser::parse)
-        return node.toJsAst(scope, JsAstMapper::mapStatements)
+        val node = parse(code, 0, reporter, insideFunction, fun Parser.(stream: TokenStream) = parse(stream))
+        return node.toJsAst(scope, fun JsAstMapper.(node: Node) = mapStatements(node))
 }
 
 public fun parseFunction(code: String, offset: Int, reporter: ErrorReporter, scope: JsScope): JsFunction =
         parse(code, offset, reporter, insideFunction = false) {
             addObserver(FunctionParsingObserver())
             primaryExpr(it)
-        }.toJsAst(scope, JsAstMapper::mapFunction)
+        }.toJsAst(scope, fun JsAstMapper.(node: Node) = mapFunction(node))
 
 private class FunctionParsingObserver : Observer {
     var functionsStarted = 0
